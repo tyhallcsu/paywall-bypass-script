@@ -7,6 +7,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 This changelog was reconstructed from the public Greasy Fork version history:
 https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com/versions
 
+## [2.0.0] - 2026-03-14
+
+### Added
+
+- Paywall auto-detection with a pulse animation and temporary "Paywall Detected" badge
+- Default **Try All** action that opens the top 3 prioritized services
+- Site-specific routing for domains such as Medium, WSJ, NYTimes, Washington Post, Bloomberg, FT, Reuters, and similar outlets
+- Local-only reliability tracking with success/fail feedback, dropdown badges, and JSON export/import
+- Keyboard shortcuts for the default bypass (`Alt+Shift+B`) and service menu (`Alt+Shift+M`)
+
+### Changed
+
+- Reworked the floating button into a split-button layout with grouped service categories
+- Updated the userscript metadata and naming to reflect the current multi-service feature set
+- Added cross-manager `GM_*` / `GM.*` compatibility wrappers plus `@noframes` and `@run-at document-idle`
+- Improved accessibility with ARIA roles, keyboard navigation, dialog labeling, visible focus states, and touch-friendly sizing
+- Extended paywall detection to search open Shadow DOM roots and mobile-safe viewport positions
+
+### Removed
+
+- Legacy references to dead or stale services such as 12ft.io, Google Cache, Yahoo Cache, Yandex Cache, and Bing Cache from the active service menu
+- Duplicate and stale `@match` metadata entries, including the incorrect `ambito` pattern
+
+### Fixed
+
+- Safe URL validation before opening bypass targets
+- Safer URL encoding for service launches, clipboard export, and related flows
+- Greasemonkey / Tampermonkey / Violentmonkey storage and menu-command compatibility edge cases
+
+## [1.4.1] - 2026-03-14
+
+### Fixed
+
+- Hardened userscript API compatibility across Tampermonkey, Violentmonkey, and Greasemonkey by adding cross-manager `GM_*` / `GM.*` wrappers
+- Added `@noframes`, `@run-at document-idle`, and HTTPS metadata cleanup for safer execution
+- Improved menu accessibility with ARIA roles, keyboard navigation, dialog labeling, and visible focus states
+- Added safe-area-aware mobile positioning and minimum tap-target sizing for the floating UI
+- Extended paywall auto-detection helpers to look through open Shadow DOM roots
+- Validated service targets before opening them and tightened URL encoding for clipboard/export and service launch flows
+- Cleaned stale `@match` metadata by removing duplicates and correcting the `ambito.com` pattern
+
+## [1.4.0] - 2026-03-14
+
+### Added
+
+- Paywall auto-detection with button pulse and temporary "Paywall Detected" badge
+- Default **Try All** action that opens the top 3 prioritized services
+- Site-specific service routing for Medium-family domains, WSJ, NYTimes, Washington Post, Bloomberg, FT, Reuters, and similar paywalled outlets
+- Local-only success/failure tracking with dropdown reliability badges
+- Keyboard shortcuts for the default bypass (`Alt+Shift+B`) and service menu (`Alt+Shift+M`)
+- Dark-mode-aware floating UI and JSON export/import for saved settings
+
+### Changed
+
+- Reworked the floating button into a split-button layout with grouped service categories
+- Refreshed the service catalog around Archive.today, Archive.org, RemovePaywall, PaywallBuster, SMRY, Freedium, and SimilarWeb
+- Updated the userscript metadata to a generic project name and a feature-focused description
+
 ## [1.3.0] - 2025-12-11
 
 ### Added
