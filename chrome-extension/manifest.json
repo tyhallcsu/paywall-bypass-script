@@ -1,0 +1,7 @@
+{
+  "_comment": "Roadmap scaffold for a future Manifest V3 Chrome extension port. This placeholder is not wired into a working extension yet.",
+  "manifest_version": 3,
+  "name": "Paywall Bypass Script (Scaffold)",
+  "version": "0.0.0",
+  "description": "Placeholder manifest for the planned Chrome extension version."
+}

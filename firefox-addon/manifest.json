@@ -1,0 +1,7 @@
+{
+  "_comment": "Roadmap scaffold for the future Firefox add-on port. This placeholder is not yet a functional add-on manifest.",
+  "manifest_version": 2,
+  "name": "Paywall Bypass Script (Firefox Scaffold)",
+  "version": "0.0.0",
+  "description": "Placeholder manifest for the planned Firefox WebExtension port."
+}

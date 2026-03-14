@@ -1,0 +1,71 @@
+{
+  "_comment": "Roadmap scaffold for the future community service registry. The current userscript does not fetch this file yet.",
+  "version": 1,
+  "updated": "2026-03-14",
+  "services": [
+    {
+      "id": "archive_today",
+      "name": "Archive.today",
+      "url_pattern": "https://archive.today/submit/?url={url}",
+      "status": "active",
+      "best_for": ["nytimes.com", "wsj.com", "bloomberg.com", "ft.com"],
+      "category": "archive"
+    },
+    {
+      "id": "archive_is",
+      "name": "Archive.is",
+      "url_pattern": "https://archive.is/submit/?url={url}",
+      "status": "active",
+      "best_for": [],
+      "category": "archive"
+    },
+    {
+      "id": "archive_ph",
+      "name": "Archive.ph",
+      "url_pattern": "https://archive.ph/submit/?url={url}",
+      "status": "active",
+      "best_for": [],
+      "category": "archive"
+    },
+    {
+      "id": "archive_org",
+      "name": "Archive.org",
+      "url_pattern": "https://web.archive.org/web/*/{url}",
+      "status": "active",
+      "best_for": [],
+      "category": "archive"
+    },
+    {
+      "id": "remove_paywall",
+      "name": "RemovePaywall",
+      "url_pattern": "https://www.removepaywall.com/search?url={url}",
+      "status": "active",
+      "best_for": ["washingtonpost.com"],
+      "category": "bypass"
+    },
+    {
+      "id": "paywall_buster",
+      "name": "PaywallBuster",
+      "url_pattern": "https://paywallbuster.com/articles/?article={url}",
+      "status": "active",
+      "best_for": [],
+      "category": "bypass"
+    },
+    {
+      "id": "smry",
+      "name": "SMRY",
+      "url_pattern": "https://smry.ai/{url_without_scheme}",
+      "status": "active",
+      "best_for": ["reuters.com"],
+      "category": "bypass"
+    },
+    {
+      "id": "similarweb",
+      "name": "SimilarWeb",
+      "url_pattern": "https://www.similarweb.com/website/{domain}/",
+      "status": "active",
+      "best_for": [],
+      "category": "analysis"
+    }
+  ]
+}

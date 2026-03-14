@@ -7,6 +7,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 This changelog was reconstructed from the public Greasy Fork version history:
 https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com/versions
 
+## [2.0.1] - 2026-03-14
+
+### Added
+
+- Public roadmap scaffolding for future browser-extension ports, the smart bypass engine, the community service registry, and the planned `paywall-detect` package
+- A dedicated GitHub issue template for domain requests
+
+### Changed
+
+- Updated the userscript metadata to use the repository namespace and an archive-focused service description
+- Refreshed the README and service-registry scaffold to match the live audited service set
+- Added JSDoc coverage and clearer service-audit comments across the larger userscript helpers
+
+### Removed
+
+- Freedium, which no longer resolves reliably enough to stay in the active service list
+
+### Fixed
+
+- PaywallBuster launches now use the canonical `/articles/?article=` route
+- The floating UI now refreshes correctly on SPA-style route changes without stacking delayed paywall checks
+- The main action button now uses a clearer `Bypass Paywall` accessible label and a more reasonable floating z-index
+
 ## [2.0.0] - 2026-03-14
 
 ### Added

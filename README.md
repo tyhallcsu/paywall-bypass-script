@@ -6,8 +6,11 @@
 [![GitHub stars](https://img.shields.io/github/stars/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/stargazers)
 [![License](https://img.shields.io/github/license/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/blob/main/LICENSE)
 [![Last commit](https://img.shields.io/github/last-commit/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/commits/main)
+[![Roadmap](https://img.shields.io/badge/Roadmap-view-blue)](ROADMAP.md)
 
 Paywall Bypass Script is a Tampermonkey/Greasemonkey userscript with 6,700+ installs and about 25 daily installs. The canonical public release is on Greasy Fork, while this repository tracks the source, documentation, and maintainer workflow.
+
+Chrome Extension version coming soon. See [ROADMAP.md](ROADMAP.md) for the planned extension ports, smart-routing work, and community service registry direction.
 
 ## Source
 
@@ -19,7 +22,7 @@ Paywall Bypass Script is a Tampermonkey/Greasemonkey userscript with 6,700+ inst
 
 - Paywall auto-detection that scans the page and briefly pulses the floating button when a likely paywall is present
 - Default **Try All** action that opens the top 3 services in one click
-- Site-aware routing that prioritizes services such as Freedium for Medium and Archive.today for WSJ / NYTimes
+- Site-aware routing that prioritizes Archive.today for WSJ / NYTimes, RemovePaywall for Washington Post, and SMRY for Reuters
 - Grouped service menu with local reliability badges based on your own success/failure feedback
 - Floating button visibility toggle stored locally with `GM_getValue` / `GM_setValue`
 - Keyboard shortcuts: `Alt+Shift+B` for the default bypass and `Alt+Shift+M` for the service menu
@@ -34,9 +37,8 @@ Paywall Bypass Script is a Tampermonkey/Greasemonkey userscript with 6,700+ inst
 - RemovePaywall
 - PaywallBuster
 - SMRY
-- Freedium for Medium-family sites
 
-### Archive / Cache Services
+### Archive Services
 
 - Archive.today
 - Archive.is
@@ -120,3 +122,7 @@ Released under the [MIT License](LICENSE).
 **sharmanhall**
 - [Greasy Fork profile](https://greasyfork.org/en/users/866731-sharmanhall)
 - [GitHub profile](https://github.com/tyhallcsu)
+
+## Roadmap
+
+Future milestones, extension plans, and contributor-facing roadmap details are documented in [ROADMAP.md](ROADMAP.md).

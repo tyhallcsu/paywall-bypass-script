@@ -1,0 +1,9 @@
+{
+  "_comment": "Roadmap scaffold for the future paywall-detect npm package. This package is not published and contains no production code yet.",
+  "name": "paywall-detect",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Placeholder package for the future standalone paywall detection library.",
+  "main": "index.js",
+  "license": "MIT"
+}

@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Paywall Bypass Script
-// @namespace    https://tampermonkey.net/
-// @version      2.0.0
-// @description  Smart paywall helper with quick-try routing, paywall detection, local reliability tracking, shortcuts, and mobile-friendly controls.
+// @name         Paywall Bypass Script (Archive & Bypass Services)
+// @namespace    https://github.com/tyhallcsu/paywall-bypass-script
+// @version      2.0.1
+// @description  Mobile and desktop-friendly paywall bypass with grouped archive and bypass services, quick routing, and accessible controls.
 // @author       sharmanhall
 // @license      MIT
 // @homepageURL  https://github.com/tyhallcsu/paywall-bypass-script
@@ -278,17 +278,19 @@
         'smry',
         'archiveIs',
         'archivePh',
-        'freedium',
         'similarWeb'
     ];
 
-    const SCRIPT_VERSION = '2.0.0';
+    const SCRIPT_VERSION = '2.0.1';
     const QUICK_TRY_LIMIT = 3;
     const PAYWALL_BADGE_DURATION_MS = 3000;
     const FEEDBACK_PROMPT_DELAY_MS = 1200;
     const FEEDBACK_EXPIRY_MS = 30 * 60 * 1000;
     const FEEDBACK_SNOOZE_MS = 60 * 1000;
     const MAX_HISTORY_ENTRIES = 100;
+    const ROUTE_REFRESH_DELAY_MS = 150;
+    const ROUTE_CHANGE_EVENT = 'paywall-bypass:route-change';
+    const HISTORY_PATCH_KEY = '__paywallBypassHistoryPatched';
     const SHORTCUT_DEFAULT = 'Alt+Shift+B';
     const SHORTCUT_MENU = 'Alt+Shift+M';
     const PAYWALL_KEYWORDS = ['paywall', 'subscribe', 'premium', 'locked', 'gate', 'metered', 'limit', 'regwall', 'piano', 'tinypass', 'poool'];
@@ -303,6 +305,8 @@
 
     // --- Service Catalog & Site-Specific Routing ---
     const SERVICE_DEFINITIONS = {
+        // Live audit 2026-03-14: archive.today still resolves with `/submit/?url=`,
+        // but may respond with HTTP 429 when rate-limited.
         archiveToday: {
             id: 'archiveToday',
             label: 'Archive.today',
@@ -310,6 +314,8 @@
             hint: 'Snapshot lookup',
             buildUrl: (url) => `https://archive.today/submit/?url=${encodeURIComponent(url)}`
         },
+        // Live audit 2026-03-14: archive.is still resolves with `/submit/?url=`,
+        // but may respond with HTTP 429 when rate-limited.
         archiveIs: {
             id: 'archiveIs',
             label: 'Archive.is',
@@ -317,6 +323,8 @@
             hint: 'Mirror snapshot',
             buildUrl: (url) => `https://archive.is/submit/?url=${encodeURIComponent(url)}`
         },
+        // Live audit 2026-03-14: archive.ph still resolves with `/submit/?url=`,
+        // but may respond with HTTP 429 when rate-limited.
         archivePh: {
             id: 'archivePh',
             label: 'Archive.ph',
@@ -324,13 +332,15 @@
             hint: 'Mirror snapshot',
             buildUrl: (url) => `https://archive.ph/submit/?url=${encodeURIComponent(url)}`
         },
+        // Live audit 2026-03-14: Wayback still accepts the encoded article URL after `/web/*/`.
         archiveOrg: {
             id: 'archiveOrg',
             label: 'Archive.org',
             group: 'archive',
             hint: 'Wayback Machine',
-            buildUrl: (url) => `https://web.archive.org/web/*/${encodeURI(url)}`
+            buildUrl: (url) => `https://web.archive.org/web/*/${encodeURIComponent(url)}`
         },
+        // Live audit 2026-03-14: RemovePaywall resolves correctly with `search?url=`.
         removePaywall: {
             id: 'removePaywall',
             label: 'RemovePaywall',
@@ -338,13 +348,16 @@
             hint: 'Archive-backed lookup',
             buildUrl: (url) => `https://www.removepaywall.com/search?url=${encodeURIComponent(url)}`
         },
+        // Live audit 2026-03-14: PaywallBuster redirects `/articles` to `/articles/`,
+        // so the canonical builder includes the trailing slash to avoid an extra hop.
         paywallBuster: {
             id: 'paywallBuster',
             label: 'PaywallBuster',
             group: 'bypass',
             hint: 'Multi-tool launcher',
-            buildUrl: (url) => `https://paywallbuster.com/articles?article=${encodeURIComponent(url)}`
+            buildUrl: (url) => `https://paywallbuster.com/articles/?article=${encodeURIComponent(url)}`
         },
+        // Live audit 2026-03-14: SMRY still resolves article URLs through its encoded proxy path.
         smry: {
             id: 'smry',
             label: 'SMRY',
@@ -352,14 +365,8 @@
             hint: 'Reader mode + summary',
             buildUrl: (url) => `https://smry.ai/${toServicePath(url)}`
         },
-        freedium: {
-            id: 'freedium',
-            label: 'Freedium',
-            group: 'bypass',
-            hint: 'Medium-specific reader',
-            supports: (urlObject) => isMediumFamilyDomain(urlObject.hostname),
-            buildUrl: (url) => `https://freedium.cfd/${encodeURIComponent(url)}`
-        },
+        // Live audit 2026-03-14: SimilarWeb still accepts `/website/{domain}/`,
+        // though some requests may be challenged with HTTP 202.
         similarWeb: {
             id: 'similarWeb',
             label: 'SimilarWeb',
@@ -370,8 +377,6 @@
     };
 
     const SITE_BEST_SERVICE = {
-        'medium.com': 'freedium',
-        'towardsdatascience.com': 'freedium',
         'nytimes.com': 'archiveToday',
         'wsj.com': 'archiveToday',
         'washingtonpost.com': 'removePaywall',
@@ -390,6 +395,9 @@
     let feedbackSnoozeUntil = 0;
     let detectionBadgeTimeout = null;
     let feedbackPromptTimeout = null;
+    let paywallDetectionTimeouts = [];
+    let currentPageUrl = window.location.href;
+    let routeRefreshTimeout = null;
     const ui = {
         root: null,
         buttonGroup: null,
@@ -407,6 +415,11 @@
 
     void bootstrap();
 
+    /**
+     * Bootstraps preferences, styles, event listeners, and the floating UI.
+     *
+     * @returns {Promise<void>} Resolves once the initial page wiring has completed.
+     */
     async function bootstrap() {
         showFloatingButton = await getStoredValue(STORAGE_KEYS.showFloatingButton, true);
         serviceOrder = sanitizeServiceOrder(await getStoredValue(STORAGE_KEYS.serviceOrder, DEFAULT_SERVICE_ORDER));
@@ -416,6 +429,7 @@
         registerMenuCommands();
         addStyles();
         bindGlobalListeners();
+        installHistoryHooks();
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeUi, { once: true });
@@ -430,6 +444,11 @@
         }
     }
 
+    /**
+     * Runs page-load work that depends on the host page being fully rendered.
+     *
+     * @returns {void}
+     */
     function handleWindowLoad() {
         syncThemeState();
         runPaywallDetection();
@@ -437,6 +456,11 @@
     }
 
     // --- Menu Commands & Keyboard Shortcuts ---
+    /**
+     * Registers the userscript-manager menu commands for launch actions and settings.
+     *
+     * @returns {void}
+     */
     function registerMenuCommands() {
         registerMenuCommandCompat(showFloatingButton ? 'Hide Floating Button' : 'Show Floating Button', toggleFloatingButton);
         registerMenuCommandCompat(`Try All (${SHORTCUT_DEFAULT})`, () => runTryAll('menu'));
@@ -450,11 +474,18 @@
         registerMenuCommandCompat('Import Settings', importSettings);
     }
 
+    /**
+     * Hooks the global keyboard, viewport, visibility, and navigation listeners.
+     *
+     * @returns {void}
+     */
     function bindGlobalListeners() {
         document.addEventListener('click', handleDocumentClick);
         document.addEventListener('keydown', handleKeyboardShortcuts);
         window.addEventListener('resize', handleViewportChange, { passive: true });
         window.addEventListener('orientationchange', handleViewportChange, { passive: true });
+        window.addEventListener('popstate', scheduleRouteRefresh);
+        window.addEventListener(ROUTE_CHANGE_EVENT, scheduleRouteRefresh);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
                 markPendingFeedbackAsLeftPage();
@@ -477,6 +508,100 @@
         }
     }
 
+    /**
+     * Patches history navigation so the floating UI refreshes on SPA route changes.
+     *
+     * @returns {void}
+     */
+    function installHistoryHooks() {
+        if (!window.history || window.history[HISTORY_PATCH_KEY]) {
+            return;
+        }
+
+        ['pushState', 'replaceState'].forEach((methodName) => {
+            const originalMethod = window.history[methodName];
+            if (typeof originalMethod !== 'function') {
+                return;
+            }
+
+            window.history[methodName] = function(...args) {
+                const result = originalMethod.apply(this, args);
+                window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
+                return result;
+            };
+        });
+
+        window.history[HISTORY_PATCH_KEY] = true;
+    }
+
+    /**
+     * Debounces route-change refresh work so single-page apps do not re-render the UI repeatedly.
+     *
+     * @returns {void}
+     */
+    function scheduleRouteRefresh() {
+        if (routeRefreshTimeout) {
+            window.clearTimeout(routeRefreshTimeout);
+        }
+
+        routeRefreshTimeout = window.setTimeout(refreshForRouteChange, ROUTE_REFRESH_DELAY_MS);
+    }
+
+    /**
+     * Re-renders the floating UI when the current page URL changes without a full reload.
+     *
+     * @returns {void}
+     */
+    function refreshForRouteChange() {
+        if (window.location.href === currentPageUrl) {
+            return;
+        }
+
+        currentPageUrl = window.location.href;
+        setDropdownVisibility(false);
+        hideFeedbackPrompt();
+
+        if (pendingFeedback && pendingFeedback.sourceUrl !== currentPageUrl) {
+            clearPendingFeedback();
+        }
+
+        if (ui.root && !document.documentElement.contains(ui.root)) {
+            resetUiReferences();
+        }
+
+        initializeUi();
+    }
+
+    /**
+     * Clears cached DOM references after SPA frameworks replace the document body.
+     *
+     * @returns {void}
+     */
+    function resetUiReferences() {
+        if (ui.toastTimer) {
+            window.clearTimeout(ui.toastTimer);
+        }
+
+        ui.root = null;
+        ui.buttonGroup = null;
+        ui.button = null;
+        ui.buttonSubtitle = null;
+        ui.menuButton = null;
+        ui.badge = null;
+        ui.dropdown = null;
+        ui.feedback = null;
+        ui.toast = null;
+        ui.feedbackTitle = null;
+        ui.feedbackActions = null;
+        ui.toastTimer = null;
+    }
+
+    /**
+     * Handles keyboard shortcuts for launching services or dismissing open UI.
+     *
+     * @param {KeyboardEvent} event The browser keyboard event.
+     * @returns {void}
+     */
     function handleKeyboardShortcuts(event) {
         if (event.key === 'Escape') {
             setDropdownVisibility(false);
@@ -506,6 +631,11 @@
     }
 
     // --- Floating UI & Dark Mode Support ---
+    /**
+     * Creates the floating UI when needed and refreshes its visible state.
+     *
+     * @returns {void}
+     */
     function initializeUi() {
         ensureUiShell();
         renderFloatingButtonState();
@@ -514,9 +644,18 @@
         scheduleFeedbackPrompt();
     }
 
+    /**
+     * Mounts the floating button, dropdown, feedback prompt, and toast shell.
+     *
+     * @returns {void}
+     */
     function ensureUiShell() {
-        if (ui.root) {
+        if (ui.root && document.documentElement.contains(ui.root)) {
             return;
+        }
+
+        if (ui.root && !document.documentElement.contains(ui.root)) {
+            resetUiReferences();
         }
 
         const root = document.createElement('div');
@@ -531,8 +670,8 @@
         const button = document.createElement('button');
         button.id = 'bypassButton';
         button.type = 'button';
-        button.title = 'Try all bypass services';
-        button.setAttribute('aria-label', 'Try all bypass services');
+        button.title = 'Bypass Paywall';
+        button.setAttribute('aria-label', 'Bypass Paywall');
         button.setAttribute('aria-keyshortcuts', SHORTCUT_DEFAULT);
 
         const buttonCopy = document.createElement('span');
@@ -630,6 +769,11 @@
         syncThemeState();
     }
 
+    /**
+     * Updates the main button copy, tooltip, and visibility from the current site context.
+     *
+     * @returns {void}
+     */
     function renderFloatingButtonState() {
         if (!ui.buttonGroup) {
             return;
@@ -648,16 +792,21 @@
 
         ui.buttonSubtitle.textContent = subtitle;
         ui.button.title = defaultService
-            ? `Try the top ${Math.min(QUICK_TRY_LIMIT, prioritizedServices.length)} services. ${defaultService.label} is first in line.`
-            : 'Try all configured bypass services.';
+            ? `Bypass Paywall. Try the top ${Math.min(QUICK_TRY_LIMIT, prioritizedServices.length)} services. ${defaultService.label} is first in line.`
+            : 'Bypass Paywall. Try all configured bypass services.';
         ui.button.setAttribute(
             'aria-label',
             defaultService
-                ? `Try all bypass services. ${defaultService.label} is first.`
-                : 'Try all configured bypass services.'
+                ? `Bypass Paywall. ${defaultService.label} is first.`
+                : 'Bypass Paywall. Try all configured bypass services.'
         );
     }
 
+    /**
+     * Rebuilds the grouped dropdown menu from the active service order and saved reliability data.
+     *
+     * @returns {void}
+     */
     function renderDropdown() {
         if (!ui.dropdown) {
             return;
@@ -685,7 +834,7 @@
         [
             { key: 'quick', label: 'Quick Actions' },
             { key: 'bypass', label: 'Bypass Services' },
-            { key: 'archive', label: 'Archive / Cache Services' },
+            { key: 'archive', label: 'Archive Services' },
             { key: 'analysis', label: 'Analysis Tools' }
         ].forEach((group) => {
             const services = groupedServices[group.key];
@@ -756,6 +905,13 @@
         setDropdownVisibility(nextState, focusFirstItem);
     }
 
+    /**
+     * Shows or hides the dropdown and keeps `aria-expanded` in sync.
+     *
+     * @param {boolean} visible Whether the dropdown should be visible.
+     * @param {boolean} focusFirstItem Whether the first menu item should receive focus when opening.
+     * @returns {void}
+     */
     function setDropdownVisibility(visible, focusFirstItem) {
         if (!ui.dropdown) {
             return;
@@ -771,6 +927,12 @@
         }
     }
 
+    /**
+     * Closes transient UI when the user clicks outside the floating controls.
+     *
+     * @param {MouseEvent} event The document click event.
+     * @returns {void}
+     */
     function handleDocumentClick(event) {
         if (!ui.root || ui.root.contains(event.target)) {
             return;
@@ -780,6 +942,11 @@
         hideFeedbackPrompt();
     }
 
+    /**
+     * Applies the detected light or dark theme to the floating UI root.
+     *
+     * @returns {void}
+     */
     function syncThemeState() {
         const theme = resolveTheme();
         if (ui.root) {
@@ -787,6 +954,12 @@
         }
     }
 
+    /**
+     * Handles keyboard navigation inside the dropdown menu.
+     *
+     * @param {KeyboardEvent} event The dropdown keyboard event.
+     * @returns {void}
+     */
     function handleDropdownKeydown(event) {
         const items = getMenuItems();
         if (!items.length) {
@@ -833,6 +1006,12 @@
     }
 
     // --- Quick-Try Cascade & Default Routing ---
+    /**
+     * Opens the highest-priority services for the current page in separate tabs.
+     *
+     * @param {string} source Identifies the UI entry point that triggered the action.
+     * @returns {void}
+     */
     function runTryAll(source) {
         const prioritizedServices = getPrioritizedServices(false).slice(0, QUICK_TRY_LIMIT);
         if (!prioritizedServices.length) {
@@ -844,9 +1023,21 @@
             .map((service) => buildServiceTarget(service, window.location.href))
             .filter(Boolean);
 
+        if (!targets.length) {
+            showToast('No safe bypass URLs could be built for this page.');
+            return;
+        }
+
         openTargets(targets, { source, mode: 'tryAll' });
     }
 
+    /**
+     * Opens a single named service for the current page.
+     *
+     * @param {string} serviceId The internal service identifier to launch.
+     * @param {string} source Identifies the UI entry point that triggered the action.
+     * @returns {void}
+     */
     function launchService(serviceId, source) {
         const service = SERVICE_DEFINITIONS[serviceId];
         if (!service) {
@@ -865,6 +1056,13 @@
         openTargets(targets, { source, mode: 'single' });
     }
 
+    /**
+     * Opens one or more target URLs and records which services should be rated when the user returns.
+     *
+     * @param {Array<{serviceId: string, label: string, url: string}>} targets The validated service targets to open.
+     * @param {{mode: string, source: string}} context Metadata about the action that launched the targets.
+     * @returns {void}
+     */
     function openTargets(targets, context) {
         if (!isValidProtocol(window.location.href)) {
             showToast('This page URL is not supported by the bypass services.');
@@ -908,6 +1106,13 @@
         scheduleFeedbackPrompt();
     }
 
+    /**
+     * Converts a service definition into a safe, HTTPS-only target object.
+     *
+     * @param {{id: string, label: string, buildUrl: Function}} service The service definition to evaluate.
+     * @param {string} sourceUrl The current article URL that should be passed into the service builder.
+     * @returns {{serviceId: string, label: string, url: string} | null} A validated target or `null` if the service cannot produce one safely.
+     */
     function buildServiceTarget(service, sourceUrl) {
         try {
             const targetUrl = service.buildUrl(sourceUrl);
@@ -927,6 +1132,11 @@
     }
 
     // --- Success / Failure Tracking ---
+    /**
+     * Debounces the post-launch feedback prompt so it appears after the user returns.
+     *
+     * @returns {void}
+     */
     function scheduleFeedbackPrompt() {
         if (feedbackPromptTimeout) {
             window.clearTimeout(feedbackPromptTimeout);
@@ -935,6 +1145,11 @@
         feedbackPromptTimeout = window.setTimeout(maybeShowFeedbackPrompt, FEEDBACK_PROMPT_DELAY_MS);
     }
 
+    /**
+     * Shows the success/failure prompt when the user is back on the article tab.
+     *
+     * @returns {void}
+     */
     function maybeShowFeedbackPrompt() {
         if (!pendingFeedback || !ui.feedback || document.visibilityState === 'hidden') {
             return;
@@ -951,6 +1166,11 @@
         }
     }
 
+    /**
+     * Rebuilds the feedback prompt buttons for the services opened on the last action.
+     *
+     * @returns {void}
+     */
     function renderFeedbackPrompt() {
         const services = pendingFeedback.services
             .map((serviceId) => SERVICE_DEFINITIONS[serviceId])
@@ -1047,11 +1267,24 @@
     }
 
     // --- Paywall Auto-Detection ---
+    /**
+     * Schedules a pair of delayed paywall checks after the host page finishes rendering.
+     *
+     * @returns {void}
+     */
     function schedulePaywallDetection() {
-        window.setTimeout(runPaywallDetection, 900);
-        window.setTimeout(runPaywallDetection, 2500);
+        paywallDetectionTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+        paywallDetectionTimeouts = [
+            window.setTimeout(runPaywallDetection, 900),
+            window.setTimeout(runPaywallDetection, 2500)
+        ];
     }
 
+    /**
+     * Runs the paywall heuristics and highlights the button when the page looks gated.
+     *
+     * @returns {void}
+     */
     function runPaywallDetection() {
         const result = detectPaywall();
         if (result.detected) {
@@ -1059,6 +1292,11 @@
         }
     }
 
+    /**
+     * Scores the page against common paywall heuristics.
+     *
+     * @returns {{detected: boolean, score: number, reasons: string[]}} The detection result and contributing heuristics.
+     */
     function detectPaywall() {
         const reasons = [];
         let score = 0;
@@ -1097,6 +1335,11 @@
         };
     }
 
+    /**
+     * Animates the main button and briefly shows the paywall badge.
+     *
+     * @returns {void}
+     */
     function highlightButtonForPaywall() {
         if (!ui.button || !showFloatingButton) {
             return;
@@ -1119,6 +1362,12 @@
         }, PAYWALL_BADGE_DURATION_MS);
     }
 
+    /**
+     * Finds the first visible element whose classes or IDs strongly suggest a paywall.
+     *
+     * @param {Array<Document | ShadowRoot>} searchRoots Candidate DOM roots to scan.
+     * @returns {Element | null} The first matching element or `null`.
+     */
     function findKeywordElement(searchRoots) {
         for (const root of searchRoots) {
             const candidates = root.querySelectorAll('[class], [id], [data-testid]');
@@ -1136,6 +1385,12 @@
         return null;
     }
 
+    /**
+     * Finds large, visible overlays that look like they are blocking article access.
+     *
+     * @param {Array<Document | ShadowRoot>} searchRoots Candidate DOM roots to scan.
+     * @returns {Element | null} The first likely paywall overlay or `null`.
+     */
     function findLikelyPaywallOverlay(searchRoots) {
         for (const root of searchRoots) {
             const overlays = root.querySelectorAll('div, section, aside, dialog');
@@ -1158,6 +1413,11 @@
     }
 
     // --- Settings Export / Import ---
+    /**
+     * Copies the current configuration and local reliability history to the clipboard as JSON.
+     *
+     * @returns {void}
+     */
     function exportSettings() {
         const payload = {
             version: SCRIPT_VERSION,
@@ -1184,6 +1444,13 @@
             });
     }
 
+    /**
+     * Reads a stored userscript value with cross-manager fallbacks.
+     *
+     * @param {string} key The storage key to read.
+     * @param {unknown} defaultValue The value to return when no stored data is available.
+     * @returns {Promise<unknown>} The stored value or the provided default.
+     */
     function getStoredValue(key, defaultValue) {
         return runAsyncCompat(
             () => (typeof GM_getValue === 'function' ? GM_getValue(key, defaultValue) : undefined),
@@ -1192,6 +1459,13 @@
         );
     }
 
+    /**
+     * Writes a userscript value with cross-manager fallbacks.
+     *
+     * @param {string} key The storage key to write.
+     * @param {unknown} value The value to store.
+     * @returns {void}
+     */
     function setStoredValue(key, value) {
         void runAsyncCompat(
             () => (typeof GM_setValue === 'function' ? GM_setValue(key, value) : undefined),
@@ -1200,6 +1474,13 @@
         );
     }
 
+    /**
+     * Registers a userscript-manager menu command when the host supports one of the known APIs.
+     *
+     * @param {string} label The user-facing command label.
+     * @param {Function} callback The function to run when the command is chosen.
+     * @returns {void}
+     */
     function registerMenuCommandCompat(label, callback) {
         try {
             if (typeof GM_registerMenuCommand === 'function') {
@@ -1214,6 +1495,12 @@
         }
     }
 
+    /**
+     * Copies text to the clipboard using userscript APIs when available.
+     *
+     * @param {string} text The text payload to copy.
+     * @returns {Promise<void>} Resolves when the clipboard write succeeds.
+     */
     function setClipboardCompat(text) {
         return Promise.resolve()
             .then(() => {
@@ -1227,6 +1514,14 @@
             });
     }
 
+    /**
+     * Runs the primary compatibility path first, then a fallback path, and finally a default.
+     *
+     * @param {Function} primary The preferred API call.
+     * @param {Function} secondary The fallback API call.
+     * @param {unknown} defaultValue The value to use when both calls fail or return `undefined`.
+     * @returns {Promise<unknown>} The resolved compatibility result.
+     */
     function runAsyncCompat(primary, secondary, defaultValue) {
         return Promise.resolve()
             .then(() => primary())
@@ -1243,6 +1538,12 @@
             .catch(() => defaultValue);
     }
 
+    /**
+     * Injects CSS through userscript helpers when possible and falls back to a style element otherwise.
+     *
+     * @param {string} styleText The CSS text to inject into the page.
+     * @returns {void}
+     */
     function addStyleCompat(styleText) {
         try {
             if (typeof GM_addStyle === 'function') {
@@ -1262,6 +1563,11 @@
         (document.head || document.documentElement).appendChild(style);
     }
 
+    /**
+     * Imports a previously exported settings payload and refreshes the visible UI state.
+     *
+     * @returns {void}
+     */
     function importSettings() {
         const raw = prompt('Paste settings JSON exported from Paywall Bypass Script:');
         if (!raw) {
@@ -1296,13 +1602,27 @@
     }
 
     // --- Utilities ---
+    /**
+     * Toggles the floating-button visibility preference and updates the visible UI.
+     *
+     * @returns {void}
+     */
     function toggleFloatingButton() {
         showFloatingButton = !showFloatingButton;
         setStoredValue(STORAGE_KEYS.showFloatingButton, showFloatingButton);
+        if (!showFloatingButton) {
+            setDropdownVisibility(false);
+        }
         renderFloatingButtonState();
         showToast(`Floating button ${showFloatingButton ? 'enabled' : 'hidden'}.`);
     }
 
+    /**
+     * Shows a transient status toast near the bottom of the viewport.
+     *
+     * @param {string} message The message text to display.
+     * @returns {void}
+     */
     function showToast(message) {
         if (!ui.toast) {
             return;
@@ -1322,6 +1642,11 @@
         }, 3200);
     }
 
+    /**
+     * Returns services that support the current URL and are visible in the dropdown/menu.
+     *
+     * @returns {Array<object>} The visible service definitions for the current page.
+     */
     function getVisibleServices() {
         const currentUrl = new URL(window.location.href);
         return serviceOrder
@@ -1330,6 +1655,12 @@
             .filter((service) => !service.supports || service.supports(currentUrl));
     }
 
+    /**
+     * Returns the current services in launch order, optionally excluding analysis-only tools.
+     *
+     * @param {boolean} includeAnalysis Whether analysis-only tools such as SimilarWeb should be included.
+     * @returns {Array<object>} The ordered list of services for the current page.
+     */
     function getPrioritizedServices(includeAnalysis) {
         const services = getVisibleServices().filter((service) => includeAnalysis || service.group !== 'analysis');
         const bestServiceId = getBestServiceForCurrentSite();
@@ -1348,6 +1679,11 @@
         return reordered;
     }
 
+    /**
+     * Looks up the preferred service override for the current site.
+     *
+     * @returns {string | null} The preferred service ID for the current domain, if one applies.
+     */
     function getBestServiceForCurrentSite() {
         const hostname = window.location.hostname.replace(/^www\./, '');
         const currentUrl = new URL(window.location.href);
@@ -1364,6 +1700,12 @@
         return null;
     }
 
+    /**
+     * Normalizes a stored service order and appends any missing supported services.
+     *
+     * @param {unknown} value The raw stored service-order payload.
+     * @returns {string[]} A de-duplicated, valid service-order array.
+     */
     function sanitizeServiceOrder(value) {
         const orderedIds = Array.isArray(value) ? value : DEFAULT_SERVICE_ORDER;
         const seen = new Set();
@@ -1386,6 +1728,12 @@
         return sanitized;
     }
 
+    /**
+     * Drops invalid service-history entries and caps the stored history length.
+     *
+     * @param {unknown} value The raw stored service-history payload.
+     * @returns {Array<{serviceId: string, domain: string, status: string, timestamp: number}>} The sanitized history array.
+     */
     function sanitizeServiceHistory(value) {
         if (!Array.isArray(value)) {
             return [];
@@ -1402,6 +1750,12 @@
             .slice(-MAX_HISTORY_ENTRIES);
     }
 
+    /**
+     * Validates the stored feedback prompt payload before it is shown again.
+     *
+     * @param {unknown} value The raw stored pending-feedback payload.
+     * @returns {{mode: string, source: string, sourceUrl: string, domain: string, services: string[], createdAt: number, leftPage: boolean} | null} The sanitized feedback payload.
+     */
     function sanitizePendingFeedback(value) {
         if (!value || !Array.isArray(value.services) || !value.services.length) {
             return null;
@@ -1423,11 +1777,22 @@
         };
     }
 
+    /**
+     * Saves the active feedback prompt payload to memory and userscript storage.
+     *
+     * @param {unknown} value The pending feedback payload.
+     * @returns {void}
+     */
     function persistPendingFeedback(value) {
         pendingFeedback = sanitizePendingFeedback(value);
         setStoredValue(STORAGE_KEYS.pendingFeedback, pendingFeedback);
     }
 
+    /**
+     * Marks the current feedback prompt as having left the source page.
+     *
+     * @returns {void}
+     */
     function markPendingFeedbackAsLeftPage() {
         if (!pendingFeedback || pendingFeedback.leftPage) {
             return;
@@ -1437,11 +1802,22 @@
         setStoredValue(STORAGE_KEYS.pendingFeedback, pendingFeedback);
     }
 
+    /**
+     * Clears any pending feedback prompt from memory and storage.
+     *
+     * @returns {void}
+     */
     function clearPendingFeedback() {
         pendingFeedback = null;
         setStoredValue(STORAGE_KEYS.pendingFeedback, null);
     }
 
+    /**
+     * Finds the first plausible article container across the light DOM and open shadow roots.
+     *
+     * @param {Array<Document | ShadowRoot>} searchRoots Candidate DOM roots to scan.
+     * @returns {Element | null} The first matching article container or `null`.
+     */
     function getArticleContainer(searchRoots) {
         for (const root of searchRoots) {
             const articleContainer = root.querySelector(ARTICLE_CONTAINER_SELECTOR);
@@ -1452,6 +1828,12 @@
         return null;
     }
 
+    /**
+     * Estimates the visible article length from paragraph text or the container body text.
+     *
+     * @param {Element | null} articleContainer The article element to measure.
+     * @returns {number} The normalized visible text length.
+     */
     function getVisibleArticleLength(articleContainer) {
         if (!articleContainer) {
             return 0;
@@ -1491,19 +1873,16 @@
         return chip;
     }
 
-    function isMediumFamilyDomain(hostname) {
-        const normalizedHost = hostname.replace(/^www\./, '');
-        return normalizedHost === 'medium.com' ||
-            normalizedHost.endsWith('.medium.com') ||
-            normalizedHost === 'towardsdatascience.com' ||
-            normalizedHost.endsWith('.towardsdatascience.com');
-    }
-
     function toServicePath(url) {
         const normalizedUrl = encodeURI(url).replace(/^https?:\/\//, '');
         return normalizedUrl.replace(/\?/g, '%3F').replace(/#/g, '%23');
     }
 
+    /**
+     * Determines which theme variant the floating UI should use.
+     *
+     * @returns {'dark' | 'light'} The resolved theme name.
+     */
     function resolveTheme() {
         const rootTheme = `${document.documentElement.getAttribute('data-theme') || ''} ${document.body ? document.body.getAttribute('data-theme') || '' : ''}`.toLowerCase();
         const classTheme = `${document.documentElement.className || ''} ${document.body ? document.body.className || '' : ''}`.toLowerCase();
@@ -1537,6 +1916,11 @@
         }
     }
 
+    /**
+     * Detects whether the current page was opened from one of the supported external services.
+     *
+     * @returns {boolean} `true` when the referrer belongs to a known bypass or archive service.
+     */
     function cameFromServiceReferrer() {
         if (!document.referrer) {
             return false;
@@ -1550,11 +1934,15 @@
             'removepaywall.com',
             'paywallbuster.com',
             'smry.ai',
-            'freedium.cfd',
             'similarweb.com'
         ].some((host) => document.referrer.includes(host));
     }
 
+    /**
+     * Collects the document plus a limited set of open shadow roots for paywall detection scans.
+     *
+     * @returns {Array<Document | ShadowRoot>} The list of searchable DOM roots.
+     */
     function getSearchRoots() {
         const roots = [document];
         if (!document.documentElement || !document.createTreeWalker) {
@@ -1572,13 +1960,18 @@
         return roots;
     }
 
+    /**
+     * Injects the floating-button, dropdown, feedback, and toast styles.
+     *
+     * @returns {void}
+     */
     function addStyles() {
         addStyleCompat(`
             #paywallBypassRoot {
                 position: fixed;
                 right: max(14px, env(safe-area-inset-right, 0px));
                 bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-                z-index: 2147483647;
+                z-index: 99999;
                 font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
                 pointer-events: none;
             }
