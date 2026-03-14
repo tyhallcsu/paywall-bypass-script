@@ -5,6 +5,8 @@
 // @description  Mobile and desktop-friendly paywall bypass with dropdown menu and right-click options. Floating button now optional!
 // @author       sharmanhall
 // @license      MIT
+// @homepageURL  https://github.com/tyhallcsu/paywall-bypass-script
+// @supportURL   https://github.com/tyhallcsu/paywall-bypass-script/issues
 // @icon         data:image/png;base64,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
 // @match       *://*.adelaidenow.com.au/*
 // @match       *://*.adweek.com/*
@@ -258,8 +260,8 @@
 // @grant        GM_addElement
 // @grant        GM_getValue
 // @grant        GM_setValue
-// @downloadURL https://update.greasyfork.org/scripts/495817/Paywall%20Bypass%20Script%20%2812ftio%2C%20Google%20Cache%2C%20PaywallBustercom%29.user.js
-// @updateURL https://update.greasyfork.org/scripts/495817/Paywall%20Bypass%20Script%20%2812ftio%2C%20Google%20Cache%2C%20PaywallBustercom%29.meta.js
+// @downloadURL  https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js
+// @updateURL    https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js
 // ==/UserScript==
 
 (function() {
@@ -292,12 +294,12 @@
     function toggleFloatingButton() {
         showFloatingButton = !showFloatingButton;
         GM_setValue('showFloatingButton', showFloatingButton);
-        
+
         const container = document.getElementById('bypassContainer');
         if (container) {
             container.style.display = showFloatingButton ? 'block' : 'none';
         }
-        
+
         // Show notification
         alert(`Floating button ${showFloatingButton ? 'enabled' : 'disabled'}. Refresh the page for the change to take effect.`);
         location.reload();

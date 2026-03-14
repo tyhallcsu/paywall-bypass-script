@@ -1,98 +1,83 @@
 # Paywall Bypass Script
 
-> Mobile and desktop-friendly paywall bypass with dropdown menu, right-click options, and multiple bypass services.
+> Mobile and desktop-friendly paywall bypass userscript with dropdown and menu-based access to multiple archive, cache, and bypass services.
 
-[![Greasy Fork](https://img.shields.io/badge/Greasy%20Fork-Install-green)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
-[![Total Installs](https://img.shields.io/badge/Total%20Installs-6%2C700%2B-blue)](#)
-[![Daily Installs](https://img.shields.io/badge/Daily%20Installs-~25-blue)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rating](https://img.shields.io/badge/Rating-12%20%E2%AD%90-brightgreen)](#)
+[![Install on Greasy Fork](https://img.shields.io/badge/Greasy%20Fork-Install-orange?style=flat-square)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+[![GitHub stars](https://img.shields.io/github/stars/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/stargazers)
+[![License](https://img.shields.io/github/license/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/blob/main/LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/commits/main)
 
-## Overview
+Paywall Bypass Script is a Tampermonkey/Greasemonkey userscript with 6,700+ installs and about 25 daily installs. The canonical public release is published on Greasy Fork, and this repository mirrors that release for source control, issue tracking, and open-source maintenance.
 
-A userscript that provides multiple ways to access paywalled content through various caching and archival services. Supports **140+ websites** across news, academic, and media domains with an intuitive interface on both mobile and desktop.
+## Source
 
-![Screenshot](https://i.imgur.com/NgLtuBm.jpeg)
+- Greasy Fork page: [Paywall Bypass Script](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+- Raw install URL: [paywall-bypass.user.js](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
+- GitHub issues: [tyhallcsu/paywall-bypass-script/issues](https://github.com/tyhallcsu/paywall-bypass-script/issues)
 
 ## Features
 
-- **Multiple Bypass Services**: 12ft.io, PaywallBuster, RemovePaywall.com
-- **Cache Services**: Archive.org (Wayback Machine), Google Cache, Yandex Cache, Yahoo Cache, Bing Cache
-- **Archive Services**: Archive.today, Archive.is, Archive.ph
-- **Mobile-Friendly**: Floating button with touch-optimized dropdown menu
-- **Desktop Support**: Right-click context menu integration
-- **Smart Button**: Transforms into "Go Back" when on bypass services
-- **Automatic Banner Removal**: Cleans up 12ft.io promotional content
-- **Zero Data Collection**: Runs locally, no external dependencies, no tracking
+- Multiple bypass services including 12ft.io, PaywallBuster, and RemovePaywall
+- Archive and cache tools including Archive.today, Archive.is, Archive.ph, Archive.org, Yandex, Yahoo, Bing, and SimilarWeb
+- Floating button for quick article access on desktop and mobile
+- Userscript manager menu commands for every supported service
+- Floating button can be toggled on or off and the preference persists
+- No external build step and no bundled dependencies
 
 ## Supported Sites
 
-Works with **140+ websites** including:
+The script supports 140+ news and media domains, including Bloomberg, WSJ, NYTimes, Washington Post, The Atlantic, Financial Times, Reuters, Fortune, Wired, Medium, BBC, CNN, Politico, Ars Technica, TechCrunch, and many more.
 
-Bloomberg, WSJ, NYTimes, Washington Post, The Atlantic, Financial Times, The Economist, Reuters, Fortune, Wired, Medium, Scientific American, The New Yorker, Vanity Fair, LA Times, Chicago Tribune, Boston Globe, The Guardian, BBC, CNN, Fox News, NBC News, AP News, Politico, The Verge, Ars Technica, TechCrunch, and [many more](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com).
+See the canonical Greasy Fork listing for the live supported-domain set:
+[Greasy Fork listing](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
 
 ## Installation
 
 ### Requirements
 
-A userscript manager for your browser:
-- [Tampermonkey](https://www.tampermonkey.net/) (Chrome/Firefox/Safari/Edge — Recommended)
-- [Greasemonkey](https://www.greasespot.net/) (Firefox)
-- [Violentmonkey](https://violentmonkey.github.io/) (Chrome/Firefox)
-- [AdGuard](https://adguard.com/) (Mobile)
+- [Tampermonkey](https://www.tampermonkey.net/) for Chrome, Firefox, Safari, and Edge
+- [Greasemonkey](https://www.greasespot.net/) for Firefox
+- [Violentmonkey](https://violentmonkey.github.io/) for Chrome and Firefox
+- [AdGuard](https://adguard.com/) for mobile userscript support
 
-### Install
+### Install options
 
-**[Click here to install from Greasy Fork](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)**
+- Live release: [Install from Greasy Fork](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+- Source mirror: [Install from GitHub raw](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
 
-Or install directly from this repo:
+### Browser Compatibility
 
-**[Install from GitHub (Raw)](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)**
-
-### Mobile Installation
-
-1. Install AdGuard from your app store
-2. Enable userscript support in AdGuard settings
-3. Install this script through AdGuard
+- Minimum: Any browser that supports Tampermonkey, Violentmonkey, Greasemonkey, or a compatible userscript manager
+- Chrome 109 on Windows 7: try Violentmonkey from the Chrome Web Store archive, or use Firefox ESR on Windows 7 instead
+- The script itself uses plain browser APIs and does not depend on a bundler or modern framework runtime
 
 ## Usage
 
 ### Mobile
-1. Tap the floating **"Bypass Paywall"** button
-2. Select your preferred service from the dropdown
-3. Use **"Go Back"** to return to the original page
+
+1. Tap the floating **Bypass Paywall** button.
+2. Choose a bypass or archive service from the dropdown.
+3. Use **Go Back** when you return from a supported bypass page.
 
 ### Desktop
-**Option 1 — Floating Button:** Click for instant 12ft.io bypass, or expand the dropdown for other services.
 
-**Option 2 — Right-Click Menu:** Right-click anywhere → select your preferred bypass service from the context menu.
+Use the floating button or open the userscript manager menu and select one of the registered service commands.
 
-## Privacy & Security
+## Changelog
 
-- No data collection or telemetry
-- No external dependencies beyond the bypass services themselves
-- Runs entirely in your browser
-- Open source (MIT License)
-
-## Stats
-
-| Metric | Value |
-|--------|-------|
-| Total Installs | 6,700+ |
-| Daily Installs | ~25 |
-| Positive Ratings | 12 |
-| Supported Sites | 140+ |
-| First Published | May 2024 |
-| Actively Maintained | Yes |
+Release history is documented in [CHANGELOG.md](CHANGELOG.md) and reconstructed from the public Greasy Fork version history:
+[Greasy Fork version history](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com/versions)
 
 ## Contributing
 
-Issues and pull requests welcome. If a site isn't working or you'd like to add support for a new domain, please open an issue.
+Bug reports, site requests, and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and review the existing [Greasy Fork feedback page](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com/feedback) before opening a new report.
 
 ## License
 
-[MIT License](LICENSE)
+Released under the [MIT License](LICENSE).
 
 ## Author
 
-**sharmanhall** — [Greasy Fork Profile](https://greasyfork.org/en/users/866731-sharmanhall) · [GitHub](https://github.com/tyhallcsu)
+**sharmanhall**
+- [Greasy Fork profile](https://greasyfork.org/en/users/866731-sharmanhall)
+- [GitHub profile](https://github.com/tyhallcsu)
