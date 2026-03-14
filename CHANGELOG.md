@@ -30,6 +30,10 @@ https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-ca
 - The floating UI now refreshes correctly on SPA-style route changes without stacking delayed paywall checks
 - The main action button now uses a clearer `Bypass Paywall` accessible label and a more reasonable floating z-index
 
+### Security
+
+- Revalidated the maintained service set against live HTTPS endpoints and removed the dead Freedium entry from the shipped catalog
+
 ## [2.0.0] - 2026-03-14
 
 ### Added

@@ -1,22 +1,42 @@
-# Paywall Bypass Script
+# Paywall Bypass Script (Archive & Bypass Services)
 
-> Smart paywall helper userscript with auto-detection, quick-try routing, site-aware defaults, and local-only reliability tracking.
+> Privacy-first userscript for opening audited archive and bypass services on paywalled articles, with paywall detection, quick-try routing, and local-only reliability tracking.
 
 [![Install on Greasy Fork](https://img.shields.io/badge/Greasy%20Fork-Install-orange?style=flat-square)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+[![Greasy Fork installs](https://img.shields.io/greasyfork/dt/495817?style=flat-square&label=installs)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+[![Greasy Fork daily installs](https://img.shields.io/greasyfork/dd/495817?style=flat-square&label=daily%20installs)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
 [![GitHub stars](https://img.shields.io/github/stars/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/stargazers)
 [![License](https://img.shields.io/github/license/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/blob/main/LICENSE)
 [![Last commit](https://img.shields.io/github/last-commit/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/commits/main)
 [![Roadmap](https://img.shields.io/badge/Roadmap-view-blue)](ROADMAP.md)
 
-Paywall Bypass Script is a Tampermonkey/Greasemonkey userscript with 6,700+ installs and about 25 daily installs. The canonical public release is on Greasy Fork, while this repository tracks the source, documentation, and maintainer workflow.
+## Overview
+
+Paywall Bypass Script is a maintained desktop-and-mobile userscript that adds a floating button, quick menu, and keyboard shortcuts for opening the best available archive and bypass services on supported news pages. It is designed to stay lightweight, readable, and contributor-friendly while giving users a fast fallback when a paywall blocks access.
+
+The primary public install page is [Greasy Fork](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com). This GitHub repository is the source of truth for development, documentation, release notes, and maintainer workflow.
 
 Chrome Extension version coming soon. See [ROADMAP.md](ROADMAP.md) for the planned extension ports, smart-routing work, and community service registry direction.
 
-## Source
+## Quick Install
 
-- Greasy Fork page: [Paywall Bypass Script](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
-- Raw install URL: [paywall-bypass.user.js](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
-- GitHub issues: [tyhallcsu/paywall-bypass-script/issues](https://github.com/tyhallcsu/paywall-bypass-script/issues)
+- Primary install: [Greasy Fork stable release](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+- Source install: [Raw GitHub userscript](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
+- Mobile install: Use [AdGuard](https://adguard.com/) userscript support on iOS or Android with the same raw GitHub URL
+
+## Project Stats
+
+Stats below reflect the public Greasy Fork listing on `2026-03-14`.
+
+| Metric | Value |
+| --- | --- |
+| Total installs | 6,660 |
+| Daily installs | 19 |
+| Ratings | 12 total (`11` good, `1` okay) |
+| Supported domain patterns | 232 `@match` entries |
+| First published | May 2024 |
+| License | MIT |
+| Actively maintained | Yes |
 
 ## Features
 
@@ -29,6 +49,12 @@ Chrome Extension version coming soon. See [ROADMAP.md](ROADMAP.md) for the plann
 - Dark-mode-aware UI that respects `prefers-color-scheme` and common host-site dark themes
 - Export / import settings as JSON through the userscript manager menu
 - No telemetry and no external API calls beyond opening the selected bypass services
+
+## Project Links
+
+- Greasy Fork page: [Paywall Bypass Script](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+- Raw install URL: [paywall-bypass.user.js](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
+- GitHub issues: [tyhallcsu/paywall-bypass-script/issues](https://github.com/tyhallcsu/paywall-bypass-script/issues)
 
 ## Services
 
@@ -51,7 +77,7 @@ Chrome Extension version coming soon. See [ROADMAP.md](ROADMAP.md) for the plann
 
 ## Supported Sites
 
-The script supports 140+ news and media domains, including Bloomberg, WSJ, NYTimes, Washington Post, The Atlantic, Financial Times, Reuters, Fortune, Wired, Medium, BBC, CNN, Politico, Ars Technica, TechCrunch, and many more.
+The script currently ships with `232` supported `@match` patterns across major news, finance, technology, and regional publishers. That includes Bloomberg, WSJ, NYTimes, Washington Post, The Atlantic, Financial Times, Reuters, Fortune, Wired, Medium, BBC, CNN, Politico, Ars Technica, TechCrunch, and many more.
 
 See the canonical Greasy Fork listing for the live supported-domain set:
 [Greasy Fork listing](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
@@ -104,6 +130,13 @@ See the canonical Greasy Fork listing for the live supported-domain set:
 - The script uses browser-native APIs and local userscript storage only
 - The **Try All** feature works best when the browser allows pop-ups for supported news sites
 
+## Privacy
+
+- No telemetry, analytics, or remote tracking
+- No bundled third-party libraries or external runtime dependencies
+- Preferences and reliability stats stay local in your userscript manager storage
+- The only external requests the script triggers are the bypass or archive pages you explicitly open
+
 ## Changelog
 
 Release history is documented in [CHANGELOG.md](CHANGELOG.md) and reconstructed from the public Greasy Fork version history:
@@ -122,6 +155,10 @@ Released under the [MIT License](LICENSE).
 **sharmanhall**
 - [Greasy Fork profile](https://greasyfork.org/en/users/866731-sharmanhall)
 - [GitHub profile](https://github.com/tyhallcsu)
+
+## Support
+
+If this project is useful to you, [star the repository](https://github.com/tyhallcsu/paywall-bypass-script/stargazers) and consider sharing broken-site reports through [CONTRIBUTING.md](CONTRIBUTING.md) so the service list stays current.
 
 ## Roadmap
 

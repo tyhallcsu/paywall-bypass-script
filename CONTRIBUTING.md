@@ -8,6 +8,9 @@ https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-ca
 Before opening a new GitHub issue, check the existing Greasy Fork feedback thread for duplicates and recent reports:
 https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com/feedback
 
+The recommended GitHub-to-Greasy-Fork publish order is documented in
+[`/.github/workflows/greasyfork-sync.md`](.github/workflows/greasyfork-sync.md).
+
 ## Reporting a broken site
 
 Open a GitHub issue and include:
