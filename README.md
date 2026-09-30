@@ -1,85 +1,78 @@
-# Paywall Bypass Script (Archive & Bypass Services)
+<div align="center">
 
-> Privacy-first userscript for opening audited archive and bypass services on paywalled articles, with paywall detection, quick-try routing, and local-only reliability tracking.
+<img src="assets/readme-banner.png" alt="Paywall Bypass Script — an ivory newspaper unfolds through an opening in a navy wall, following an amber ribbon." width="100%">
 
-[![Install on Greasy Fork](https://img.shields.io/badge/Greasy%20Fork-Install-orange?style=flat-square)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
-[![Greasy Fork installs](https://img.shields.io/greasyfork/dt/495817?style=flat-square&label=installs)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
-[![Greasy Fork daily installs](https://img.shields.io/greasyfork/dd/495817?style=flat-square&label=daily%20installs)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
-[![GitHub stars](https://img.shields.io/github/stars/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/stargazers)
-[![License](https://img.shields.io/github/license/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/blob/main/LICENSE)
-[![Last commit](https://img.shields.io/github/last-commit/tyhallcsu/paywall-bypass-script?style=flat-square)](https://github.com/tyhallcsu/paywall-bypass-script/commits/main)
-[![Roadmap](https://img.shields.io/badge/Roadmap-view-blue)](ROADMAP.md)
+# Paywall Bypass Script
+
+**Archive and bypass services, one article away.**
+
+A privacy-first userscript with paywall detection, quick-try routing, and local-only reliability tracking.
+
+[![Install on Greasy Fork](https://img.shields.io/badge/Greasy_Fork-Install-d99a39?style=flat-square)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com) [![JavaScript userscript](https://img.shields.io/badge/JavaScript-Userscript-f1e4c8?style=flat-square)](paywall-bypass.user.js) [![232 site patterns](https://img.shields.io/badge/Site_patterns-232-237d85?style=flat-square)](#supported-sites) [![MIT license](https://img.shields.io/badge/License-MIT-237d85?style=flat-square)](LICENSE)
+
+**[Install](#quick-install)** · [See it in action](#preview) · [Usage](#usage) · [Services](#services) · [Contribute](#contributing)
+
+</div>
+
+---
 
 ## Overview
 
-Paywall Bypass Script is a maintained desktop-and-mobile userscript that adds a floating button, quick menu, and keyboard shortcuts for opening the best available archive and bypass services on supported news pages. It is designed to stay lightweight, readable, and contributor-friendly while giving users a fast fallback when a paywall blocks access.
+Paywall Bypass Script adds a floating **Try All** button, a grouped service menu, and keyboard shortcuts to supported article pages. Open up to three archive or bypass services at once, or choose one yourself. When you return, record what worked; your reliability badges come from your own local feedback.
 
-The primary public install page is [Greasy Fork](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com). This GitHub repository is the source of truth for development, documentation, release notes, and maintainer workflow.
+[Greasy Fork](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com) is the primary public release. This repository holds the source, documentation, release notes, and maintainer workflow.
 
-Chrome Extension version coming soon. See [ROADMAP.md](ROADMAP.md) for the planned extension ports, smart-routing work, and community service registry direction.
+**Current distribution: userscript.** The Chrome extension, Firefox add-on, and detection package directories are planning scaffolds. Their next steps are documented in the [roadmap](ROADMAP.md).
 
 ## Quick Install
 
-- Primary install: [Greasy Fork stable release](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
-- Source install: [Raw GitHub userscript](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
-- Mobile install: Use [AdGuard](https://adguard.com/) userscript support on iOS or Android with the same raw GitHub URL
+1. Install a [compatible userscript manager](#requirements) for your browser.
+2. Open the **[Greasy Fork install page](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)** and confirm installation in your manager.
+3. Visit a [supported article page](#supported-sites), then click **Try All**.
 
-## Project Stats
-
-Stats below reflect the public Greasy Fork listing on `2026-03-14`.
-
-| Metric | Value |
+| Install path | Use it for |
 | --- | --- |
-| Total installs | 6,660 |
-| Daily installs | 19 |
-| Ratings | 12 total (`11` good, `1` okay) |
-| Supported domain patterns | 232 `@match` entries |
-| First published | May 2024 |
-| License | MIT |
-| Actively maintained | Yes |
+| **[Greasy Fork stable release](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)** | The primary public install |
+| [GitHub source userscript](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js) | The version on this repository’s `main` branch |
+| [AdGuard](https://adguard.com/) userscript support | Mobile installation on iOS or Android using the same raw GitHub URL |
+
+The script opens external archive and bypass services. Results depend on the service and the article; a matching domain does not guarantee an available copy.
+
+## Preview
+
+![The actual userscript service menu on a sample page, showing Try All, grouped archive and bypass services, and fresh local settings.](assets/service-menu-demo.png)
+
+<sub>Actual userscript UI on a synthetic demo page, using fresh local settings. No publisher content or external service result is shown. The banner above is original generated artwork.</sub>
 
 ## Features
 
-- Paywall auto-detection that scans the page and briefly pulses the floating button when a likely paywall is present
-- Default **Try All** action that opens the top 3 services in one click
-- Site-aware routing that prioritizes Archive.today for WSJ / NYTimes, RemovePaywall for Washington Post, and SMRY for Reuters
-- Grouped service menu with local reliability badges based on your own success/failure feedback
-- Floating button visibility toggle stored locally with `GM_getValue` / `GM_setValue`
-- Keyboard shortcuts: `Alt+Shift+B` for the default bypass and `Alt+Shift+M` for the service menu
-- Dark-mode-aware UI that respects `prefers-color-scheme` and common host-site dark themes
-- Export / import settings as JSON through the userscript manager menu
-- No telemetry and no external API calls beyond opening the selected bypass services
-
-## Project Links
-
-- Greasy Fork page: [Paywall Bypass Script](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
-- Raw install URL: [paywall-bypass.user.js](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
-- GitHub issues: [tyhallcsu/paywall-bypass-script/issues](https://github.com/tyhallcsu/paywall-bypass-script/issues)
+- **Detect likely paywalls** — auto-detection that scans the page and briefly pulses the floating button when a likely paywall is present
+- **Try several services** — the default **Try All** action that opens the top 3 services in one click
+- **Start with a site-specific preference** — routing that prioritizes Archive.today for WSJ / NYTimes, RemovePaywall for Washington Post, and SMRY for Reuters
+- **Choose a service** — grouped service menu with local reliability badges based on your own success/failure feedback
+- **Control visibility** — floating button visibility toggle stored locally with `GM_getValue` / `GM_setValue`
+- **Use the keyboard** — shortcuts: `Alt+Shift+B` for the default bypass and `Alt+Shift+M` for the service menu
+- **Match your theme** — dark-mode-aware UI that respects `prefers-color-scheme` and common host-site dark themes
+- **Move your setup** — export / import settings as JSON through the userscript manager menu
+- **Keep feedback local** — no telemetry or background API calls; external services open only when you choose them
 
 ## Services
 
-### Bypass Services
+| Group | Included services |
+| --- | --- |
+| **Bypass** | RemovePaywall · PaywallBuster · SMRY |
+| **Archive** | Archive.today · Archive.is · Archive.ph · Archive.org / Wayback Machine |
+| **Analysis** | SimilarWeb (domain overview) |
 
-- RemovePaywall
-- PaywallBuster
-- SMRY
+**Try All** opens up to three prioritized services and excludes analysis tools. Site-specific rules prefer Archive.today for NYTimes, WSJ, Bloomberg, Financial Times, The New Yorker, and The Atlantic; RemovePaywall for Washington Post; and SMRY for Reuters. Other sites use the configured service order.
 
-### Archive Services
-
-- Archive.today
-- Archive.is
-- Archive.ph
-- Archive.org / Wayback Machine
-
-### Analysis Tools
-
-- SimilarWeb
+Service URLs and routing rules live in [paywall-bypass.user.js](paywall-bypass.user.js). The names above describe the bundled catalog, not a live availability check.
 
 ## Supported Sites
 
-The script currently ships with `232` supported `@match` patterns across major news, finance, technology, and regional publishers. That includes Bloomberg, WSJ, NYTimes, Washington Post, The Atlantic, Financial Times, Reuters, Fortune, Wired, Medium, BBC, CNN, Politico, Ars Technica, TechCrunch, and many more.
+The GitHub userscript currently ships with `232` supported `@match` patterns across major news, finance, technology, and regional publishers. That includes Bloomberg, WSJ, NYTimes, Washington Post, The Atlantic, Financial Times, Reuters, Fortune, Wired, Medium, BBC, CNN, Politico, Ars Technica, TechCrunch, and many more.
 
-See the canonical Greasy Fork listing for the live supported-domain set:
+Check the `@match` block in [the source userscript](paywall-bypass.user.js) for this checkout’s full list, or the canonical listing for the published release:
 [Greasy Fork listing](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
 
 ## Installation
@@ -104,6 +97,13 @@ See the canonical Greasy Fork listing for the live supported-domain set:
 2. Click **Try All** or press `Alt+Shift+B` to open the top services in new tabs.
 3. Click the chevron button or press `Alt+Shift+M` to choose a specific service.
 4. When you come back to the article tab, mark which service worked so the script can update your local reliability badges.
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Alt+Shift+B` | Open the top services with **Try All** |
+| `Alt+Shift+M` | Open or close the service menu |
 
 ### Paywall Detection
 
@@ -135,7 +135,33 @@ See the canonical Greasy Fork listing for the live supported-domain set:
 - No telemetry, analytics, or remote tracking
 - No bundled third-party libraries or external runtime dependencies
 - Preferences and reliability stats stay local in your userscript manager storage
-- The only external requests the script triggers are the bypass or archive pages you explicitly open
+- The script opens third-party pages only when you select a service or **Try All**
+- Selected services receive the article URL; SimilarWeb receives the domain. Their pages operate under their own privacy policies.
+
+## Project Stats
+
+Historical snapshot recorded in the project documentation on **March 14, 2026**. These figures are not live counters.
+
+<details>
+<summary>View the March 2026 snapshot</summary>
+
+| Metric | Value |
+| --- | --- |
+| Total installs | 6,660 |
+| Daily installs | 19 |
+| Ratings | 12 total (`11` good, `1` okay) |
+| Supported domain patterns | 232 `@match` entries |
+| First published | May 2024 |
+| License | MIT |
+| Maintenance status at snapshot | Actively maintained |
+
+</details>
+
+## Project Links
+
+- Greasy Fork page: [Paywall Bypass Script](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com)
+- Raw install URL: [paywall-bypass.user.js](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
+- GitHub issues: [tyhallcsu/paywall-bypass-script/issues](https://github.com/tyhallcsu/paywall-bypass-script/issues)
 
 ## Changelog
 
@@ -145,6 +171,12 @@ Release history is documented in [CHANGELOG.md](CHANGELOG.md) and reconstructed 
 ## Contributing
 
 Bug reports, site requests, and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and review the existing [Greasy Fork feedback page](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com/feedback) before opening a new report.
+
+## Roadmap
+
+Future milestones, extension plans, and contributor-facing roadmap details are documented in [ROADMAP.md](ROADMAP.md).
+
+For the broader design direction, see the [feature strategy](FEATURES.md) and [smart-engine specification](docs/smart-engine-spec.md).
 
 ## License
 
@@ -158,8 +190,4 @@ Released under the [MIT License](LICENSE).
 
 ## Support
 
-If this project is useful to you, [star the repository](https://github.com/tyhallcsu/paywall-bypass-script/stargazers) and consider sharing broken-site reports through [CONTRIBUTING.md](CONTRIBUTING.md) so the service list stays current.
-
-## Roadmap
-
-Future milestones, extension plans, and contributor-facing roadmap details are documented in [ROADMAP.md](ROADMAP.md).
+If this project is useful to you, [star the repository](https://github.com/tyhallcsu/paywall-bypass-script) and consider sharing broken-site reports through [CONTRIBUTING.md](CONTRIBUTING.md) so the service list stays current.
