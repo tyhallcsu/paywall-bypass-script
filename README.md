@@ -12,7 +12,7 @@
 
 </div>
 
-A desktop-and-mobile **userscript** that adds a floating button, grouped service menu, and keyboard shortcuts to supported article pages. It opens archive and reading services, prioritizes a route for selected sites, and keeps your service feedback locally.
+A desktop-and-mobile **userscript** that adds a floating button, grouped service menu, keyboard shortcuts, and targeted client-side site fixes to supported article pages. It runs local site packs where available, opens archive and reading services, prioritizes a route for selected sites, and keeps your service feedback locally.
 
 **This is a service launcher.** A matching domain or a paywall-detection signal does not guarantee that an article is available. External services determine their own coverage and availability.
 
@@ -26,7 +26,7 @@ A desktop-and-mobile **userscript** that adds a floating button, grouped service
 - Source install: [Raw GitHub userscript](https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js)
 - Mobile install: Use [AdGuard](https://adguard.com/) userscript support on iOS or Android with the same raw GitHub URL. Availability depends on the AdGuard product, platform, and browser integration.
 
-The checked-in userscript declares version **2.0.1**. Its `@downloadURL` and `@updateURL` point to GitHub `main`; see the [manual publishing workflow](.github/workflows/greasyfork-sync.md) for keeping GitHub and Greasy Fork aligned.
+The checked-in userscript declares version **2.1.0**. Its `@downloadURL` and `@updateURL` point to GitHub `main`; see the [manual publishing workflow](.github/workflows/greasyfork-sync.md) for keeping GitHub and Greasy Fork aligned.
 
 ## Interface Preview
 
@@ -40,17 +40,18 @@ The primary public install page is [Greasy Fork](https://greasyfork.org/en/scrip
 
 | Component | Status in this repository |
 |---|---|
-| [Userscript](paywall-bypass.user.js) | Implemented: floating controls, detection, service routing, local feedback and settings |
+| [Userscript](paywall-bypass.user.js) | Implemented: floating controls, detection, client-side site fixes, service routing, local feedback and settings |
 | [Chrome extension](chrome-extension/) | Scaffold only; not a working extension or store release |
 | [Firefox add-on](firefox-addon/) | Scaffold only; not a working add-on |
 | [paywall-detect package](packages/paywall-detect/) | Private placeholder; no production implementation |
 | [Service registry](services.json) | Proposed registry; the userscript currently uses its embedded service catalog |
 
-Extension ports, adaptive routing, and the community registry remain [roadmap work](ROADMAP.md). Roadmap milestone numbers do not establish that a feature shipped in userscript version 2.0.1.
+Extension ports, adaptive routing, and the community registry remain [roadmap work](ROADMAP.md). Roadmap milestone numbers do not establish that a feature shipped in userscript version 2.1.0.
 
 ## Features
 
 - Paywall auto-detection that scans the page and briefly pulses the floating button when a likely paywall is present
+- Client-side site rule packs for Medium-family pages, Bloomberg, Los Angeles Times, MIT Technology Review, Globe and Mail, and selected Australian Community Media sites
 - Default **Try All** action that opens the top 3 services in one click
 - Site-aware routing that prioritizes Archive.today for WSJ / NYTimes, RemovePaywall for Washington Post, and SMRY for Reuters
 - Grouped service menu with local reliability badges based on your own success/failure feedback
@@ -65,14 +66,22 @@ Extension ports, adaptive routing, and the community registry remain [roadmap wo
 ### Quick Start
 
 1. Open a supported article page.
-2. Click **Try All** or press `Alt+Shift+B` to open the top services in new tabs.
-3. Click the chevron button or press `Alt+Shift+M` to choose a specific service.
-4. When you come back to the article tab, mark which service worked so the script can update your local reliability badges.
+2. If a supported site pack is available, the script tries local fixes automatically after the page renders.
+3. Click **Try All** or press `Alt+Shift+B` to open the top services in new tabs.
+4. Click the chevron button or press `Alt+Shift+M` to choose a specific service or run **Apply Local Fixes** again.
+5. When you come back to the article tab, mark which service worked so the script can update your local reliability badges.
 
 ### Paywall Detection
 
 - The script checks for common paywall markers such as `paywall`, `subscribe`, `premium`, `metered`, `piano`, `tinypass`, and `poool`
 - If a likely paywall is detected, the floating button pulses and shows a brief **Paywall Detected** badge
+
+### Client-Side Site Fixes
+
+- Local rule packs run automatically on supported domains before you need an external service
+- The first-wave packs target Medium-family pages, Bloomberg, Los Angeles Times, MIT Technology Review, Globe and Mail, and selected Australian Community Media publications
+- If a page loads late or changes after in-page navigation, use **Apply Local Fixes** from the dropdown or userscript menu to rerun the pack
+- When a structured `articleBody` is still present in page metadata, the script can append a clean local recovery block without sending data anywhere
 
 ### Local Reliability Tracking
 

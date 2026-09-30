@@ -7,6 +7,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 This changelog was reconstructed from the public Greasy Fork version history:
 https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com/versions
 
+## [2.1.0] - 2026-03-15
+
+### Added
+
+- Client-side site rule packs that can remove local overlays, restore scrolling, and unhide article bodies before falling back to external services
+- Manual **Apply Local Fixes** actions in both the dropdown menu and the userscript manager menu
+- A structured-data article recovery block for supported sites whose JSON-LD metadata still exposes full article text
+
+### Changed
+
+- Updated the floating button copy and dropdown state to reflect when a local site fix is already active on the page
+- Refreshed the README to document the new local-fix workflow and the first supported rule-pack domains
+
+### Fixed
+
+- Re-ran client-side fixes across delayed page loads and SPA-style route changes so local rules are not lost after in-page navigation
+- Restored Chrome-109-friendly text splitting in the local article recovery helper without newer regex dependencies
+
 ## [2.0.1] - 2026-03-14
 
 ### Added
