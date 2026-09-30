@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Paywall Bypass Script (Archive & Bypass Services)
 // @namespace    https://github.com/tyhallcsu/paywall-bypass-script
-// @version      2.0.1
-// @description  Mobile and desktop-friendly paywall bypass with grouped archive and bypass services, quick routing, and accessible controls.
+// @version      2.1.0
+// @description  Mobile and desktop-friendly paywall bypass with grouped archive and bypass services, quick routing, client-side site fixes, and accessible controls.
 // @author       sharmanhall
 // @license      MIT
 // @homepageURL  https://github.com/tyhallcsu/paywall-bypass-script
@@ -281,8 +281,9 @@
         'similarWeb'
     ];
 
-    const SCRIPT_VERSION = '2.0.1';
+    const SCRIPT_VERSION = '2.1.0';
     const QUICK_TRY_LIMIT = 3;
+    const LOCAL_RULE_PACK_DELAYS_MS = [0, 900, 2500];
     const PAYWALL_BADGE_DURATION_MS = 3000;
     const FEEDBACK_PROMPT_DELAY_MS = 1200;
     const FEEDBACK_EXPIRY_MS = 30 * 60 * 1000;
@@ -387,6 +388,51 @@
         'reuters.com': 'smry'
     };
 
+    const AUSTRALIAN_COMMUNITY_MEDIA_DOMAINS = [
+        'centralwesterndaily.com.au',
+        'examiner.com.au',
+        'theadvocate.com.au'
+    ];
+
+    const LOCAL_RULE_PACKS = {
+        mediumFamily: {
+            id: 'mediumFamily',
+            label: 'Medium family',
+            supports: (context) => context.matchesAnyDomain(['medium.com', 'towardsdatascience.com']) || Boolean(document.querySelector('script[src^="https://cdn-client.medium.com/"]')),
+            apply: applyMediumFamilyRulePack
+        },
+        bloomberg: {
+            id: 'bloomberg',
+            label: 'Bloomberg article rescue',
+            supports: (context) => context.matchesDomain('bloomberg.com'),
+            apply: applyBloombergRulePack
+        },
+        latimes: {
+            id: 'latimes',
+            label: 'Los Angeles Times meter reset',
+            supports: (context) => context.matchesDomain('latimes.com'),
+            apply: applyLatimesRulePack
+        },
+        techReview: {
+            id: 'techReview',
+            label: 'MIT Technology Review unhide',
+            supports: (context) => context.matchesDomain('technologyreview.com'),
+            apply: applyTechnologyReviewRulePack
+        },
+        globeAndMail: {
+            id: 'globeAndMail',
+            label: 'Globe and Mail unhide',
+            supports: (context) => context.matchesDomain('theglobeandmail.com'),
+            apply: applyGlobeAndMailRulePack
+        },
+        australianCommunityMedia: {
+            id: 'australianCommunityMedia',
+            label: 'Australian Community Media unhide',
+            supports: (context) => context.matchesAnyDomain(AUSTRALIAN_COMMUNITY_MEDIA_DOMAINS),
+            apply: applyAustralianCommunityMediaRulePack
+        }
+    };
+
     // --- Persistent State ---
     let showFloatingButton = true;
     let serviceOrder = sanitizeServiceOrder(DEFAULT_SERVICE_ORDER);
@@ -396,6 +442,9 @@
     let detectionBadgeTimeout = null;
     let feedbackPromptTimeout = null;
     let paywallDetectionTimeouts = [];
+    let localRulePackTimeouts = [];
+    let appliedLocalRulePackIds = [];
+    let localRuleToastShown = false;
     let currentPageUrl = window.location.href;
     let routeRefreshTimeout = null;
     const ui = {
@@ -451,6 +500,7 @@
      */
     function handleWindowLoad() {
         syncThemeState();
+        applyClientSideRulePacks('load');
         runPaywallDetection();
         scheduleFeedbackPrompt();
     }
@@ -463,6 +513,7 @@
      */
     function registerMenuCommands() {
         registerMenuCommandCompat(showFloatingButton ? 'Hide Floating Button' : 'Show Floating Button', toggleFloatingButton);
+        registerMenuCommandCompat('Apply Local Fixes', () => rerunClientSideRulePacks('menu'));
         registerMenuCommandCompat(`Try All (${SHORTCUT_DEFAULT})`, () => runTryAll('menu'));
         registerMenuCommandCompat(`Open Service Menu (${SHORTCUT_MENU})`, () => toggleDropdown(true, true));
 
@@ -558,6 +609,9 @@
         }
 
         currentPageUrl = window.location.href;
+        clearLocalRulePackTimeouts();
+        appliedLocalRulePackIds = [];
+        localRuleToastShown = false;
         setDropdownVisibility(false);
         hideFeedbackPrompt();
 
@@ -640,6 +694,7 @@
         ensureUiShell();
         renderFloatingButtonState();
         renderDropdown();
+        scheduleClientSideRulePacks();
         schedulePaywallDetection();
         scheduleFeedbackPrompt();
     }
@@ -784,21 +839,23 @@
         const prioritizedServices = getPrioritizedServices(false);
         const defaultService = prioritizedServices[0];
         const bestServiceId = getBestServiceForCurrentSite();
-        const subtitle = defaultService
+        const serviceSubtitle = defaultService
             ? (bestServiceId === defaultService.id
                 ? `${defaultService.label} first for ${window.location.hostname.replace(/^www\./, '')}`
                 : `Starts with ${defaultService.label}`)
             : 'Choose a bypass service';
+        const localRuleSummary = getAppliedLocalRuleSummary();
+        const subtitle = localRuleSummary ? `${localRuleSummary}. ${serviceSubtitle}` : serviceSubtitle;
 
         ui.buttonSubtitle.textContent = subtitle;
         ui.button.title = defaultService
-            ? `Bypass Paywall. Try the top ${Math.min(QUICK_TRY_LIMIT, prioritizedServices.length)} services. ${defaultService.label} is first in line.`
-            : 'Bypass Paywall. Try all configured bypass services.';
+            ? `Bypass Paywall. ${localRuleSummary ? `${localRuleSummary}. ` : ''}Try the top ${Math.min(QUICK_TRY_LIMIT, prioritizedServices.length)} services. ${defaultService.label} is first in line.`
+            : `Bypass Paywall. ${localRuleSummary ? `${localRuleSummary}. ` : ''}Try all configured bypass services.`;
         ui.button.setAttribute(
             'aria-label',
             defaultService
-                ? `Bypass Paywall. ${defaultService.label} is first.`
-                : 'Bypass Paywall. Try all configured bypass services.'
+                ? `Bypass Paywall. ${localRuleSummary ? `${localRuleSummary}. ` : ''}${defaultService.label} is first.`
+                : `Bypass Paywall. ${localRuleSummary ? `${localRuleSummary}. ` : ''}Try all configured bypass services.`
         );
     }
 
@@ -814,13 +871,23 @@
 
         ui.dropdown.textContent = '';
 
-        const groupedServices = {
-            quick: [{
+        const quickActions = [{
                 id: 'tryAll',
                 label: 'Try All',
                 hint: `Open top ${Math.min(QUICK_TRY_LIMIT, getPrioritizedServices(false).length)} services`,
                 group: 'quick'
-            }],
+            }];
+        if (getApplicableLocalRulePacks().length) {
+            quickActions.unshift({
+                id: 'applyLocalFixes',
+                label: 'Apply Local Fixes',
+                hint: 'Run client-side site rules for this page',
+                group: 'quick'
+            });
+        }
+
+        const groupedServices = {
+            quick: quickActions,
             bypass: [],
             archive: [],
             analysis: []
@@ -873,6 +940,8 @@
 
                 if (service.id === 'tryAll') {
                     badgeRow.appendChild(createChip('Default'));
+                } else if (service.id === 'applyLocalFixes') {
+                    badgeRow.appendChild(createChip(appliedLocalRulePackIds.length ? 'Active' : 'Local'));
                 } else {
                     if (bestServiceId === service.id) {
                         badgeRow.appendChild(createChip('Recommended'));
@@ -886,7 +955,13 @@
                 option.appendChild(badgeRow);
                 option.addEventListener('click', (event) => {
                     event.stopPropagation();
-                    service.id === 'tryAll' ? runTryAll('dropdown') : launchService(service.id, 'dropdown');
+                    if (service.id === 'tryAll') {
+                        runTryAll('dropdown');
+                    } else if (service.id === 'applyLocalFixes') {
+                        rerunClientSideRulePacks('dropdown');
+                    } else {
+                        launchService(service.id, 'dropdown');
+                    }
                     setDropdownVisibility(false);
                 });
 
@@ -1003,6 +1078,763 @@
 
         const boundedIndex = Math.max(0, Math.min(index, items.length - 1));
         items[boundedIndex].focus();
+    }
+
+    // --- Client-Side Site Rule Packs ---
+    /**
+     * Schedules staggered client-side rule-pack runs so late-loading paywalls can still be removed.
+     *
+     * @returns {void}
+     */
+    function scheduleClientSideRulePacks() {
+        clearLocalRulePackTimeouts();
+
+        LOCAL_RULE_PACK_DELAYS_MS.forEach((delay) => {
+            const timeoutId = window.setTimeout(() => {
+                applyClientSideRulePacks(`scheduled:${delay}`);
+            }, delay);
+            localRulePackTimeouts.push(timeoutId);
+        });
+    }
+
+    /**
+     * Clears any pending delayed client-side rule-pack runs.
+     *
+     * @returns {void}
+     */
+    function clearLocalRulePackTimeouts() {
+        localRulePackTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+        localRulePackTimeouts = [];
+    }
+
+    /**
+     * Re-runs the local site fixes immediately and refreshes the button copy when anything changes.
+     *
+     * @param {string} source Identifies the UI entry point that requested the rerun.
+     * @returns {void}
+     */
+    function rerunClientSideRulePacks(source) {
+        clearLocalRulePackTimeouts();
+        applyClientSideRulePacks(source);
+        renderFloatingButtonState();
+        renderDropdown();
+    }
+
+    /**
+     * Applies any matching client-side site rule packs for the current page.
+     *
+     * @param {string} source Identifies what triggered the rule-pack run.
+     * @returns {boolean} `true` when at least one rule pack changed the page.
+     */
+    function applyClientSideRulePacks(source) {
+        const applicablePacks = getApplicableLocalRulePacks();
+        if (!applicablePacks.length) {
+            if (source === 'menu' || source === 'dropdown') {
+                showToast('No local fixes are available for this site yet.');
+            }
+            return false;
+        }
+
+        const context = getLocalRuleContext();
+        const nextAppliedPackIds = new Set(appliedLocalRulePackIds);
+        const newlyAppliedLabels = [];
+
+        applicablePacks.forEach((rulePack) => {
+            try {
+                const result = rulePack.apply(context);
+                if (result && result.applied) {
+                    if (!nextAppliedPackIds.has(rulePack.id)) {
+                        newlyAppliedLabels.push(rulePack.label);
+                    }
+                    nextAppliedPackIds.add(rulePack.id);
+                }
+            } catch (error) {
+                // Ignore individual rule-pack failures so the rest can still run.
+            }
+        });
+
+        appliedLocalRulePackIds = Array.from(nextAppliedPackIds);
+
+        if (newlyAppliedLabels.length) {
+            renderFloatingButtonState();
+            renderDropdown();
+
+            if (!localRuleToastShown || source === 'menu' || source === 'dropdown') {
+                showToast(`${formatLabelList(newlyAppliedLabels)} local fix${newlyAppliedLabels.length === 1 ? '' : 'es'} applied.`);
+                localRuleToastShown = true;
+            }
+
+            return true;
+        }
+
+        if (source === 'menu' || source === 'dropdown') {
+            showToast(appliedLocalRulePackIds.length
+                ? 'Local fixes are already active for this page.'
+                : 'No new local fixes were needed on this page.');
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the local rule packs that apply to the current hostname and document state.
+     *
+     * @returns {Array<{id: string, label: string, supports: Function, apply: Function}>} The supported local rule packs.
+     */
+    function getApplicableLocalRulePacks() {
+        const context = getLocalRuleContext();
+        return Object.values(LOCAL_RULE_PACKS).filter((rulePack) => {
+            try {
+                return Boolean(rulePack.supports(context));
+            } catch (error) {
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Summarizes the active local rule-pack state for the floating button copy.
+     *
+     * @returns {string} A short human-readable summary or an empty string.
+     */
+    function getAppliedLocalRuleSummary() {
+        if (!appliedLocalRulePackIds.length) {
+            return '';
+        }
+
+        if (appliedLocalRulePackIds.length === 1) {
+            const rulePack = LOCAL_RULE_PACKS[appliedLocalRulePackIds[0]];
+            return rulePack ? `${rulePack.label} active` : 'Local fix active';
+        }
+
+        return `${appliedLocalRulePackIds.length} local fixes active`;
+    }
+
+    /**
+     * Builds the shared context object that local site rule packs use for domain matching.
+     *
+     * @returns {{currentUrl: URL, hostname: string, searchRoots: Array<Document | ShadowRoot>, articleContainer: Element | null, matchesDomain: Function, matchesAnyDomain: Function}} The current site context.
+     */
+    function getLocalRuleContext() {
+        const currentUrl = new URL(window.location.href);
+        const hostname = normalizeHostname(currentUrl.hostname);
+        const searchRoots = getSearchRoots();
+
+        return {
+            currentUrl,
+            hostname,
+            searchRoots,
+            articleContainer: getArticleContainer(searchRoots),
+            matchesDomain: (domain) => hostnameMatchesDomain(hostname, domain),
+            matchesAnyDomain: (domains) => domains.some((domain) => hostnameMatchesDomain(hostname, domain))
+        };
+    }
+
+    /**
+     * Removes site-specific overlays and restores scrolling for Medium and Medium-family mirrors.
+     *
+     * @param {ReturnType<typeof getLocalRuleContext>} context The current site context.
+     * @returns {{applied: boolean}} The local-rule result.
+     */
+    function applyMediumFamilyRulePack(context) {
+        let changes = 0;
+
+        changes += removeElements([
+            '#paywall-background-color',
+            '[id^="paywall-"]',
+            '[data-testid="metering-overlay"]',
+            '[data-testid="paywall-lock-screen"]',
+            'div[class*="meteringOverlay"]',
+            'div[class*="paywallCta"]',
+            'div[class*="paywallOverlay"]'
+        ]);
+
+        changes += clearOverflowLocks([document.documentElement, document.body]);
+        changes += removeClassTokensByPattern([document.documentElement, document.body], /(no-scroll|noscroll|meter|paywall|overlay)/i);
+        changes += revealElements([
+            'article',
+            'main article',
+            '[data-testid="storyContent"]'
+        ], ['filter', 'opacity', 'max-height', 'overflow']);
+
+        return createLocalRuleResult(changes);
+    }
+
+    /**
+     * Removes Bloomberg overlays, clears local meter state, and restores article visibility.
+     *
+     * @param {ReturnType<typeof getLocalRuleContext>} context The current site context.
+     * @returns {{applied: boolean}} The local-rule result.
+     */
+    function applyBloombergRulePack(context) {
+        let changes = 0;
+
+        changes += removeElements([
+            '#fortress-paywall-container-root',
+            '[data-testid="fortress-paywall-container"]',
+            '[data-testid="fortress-container"]',
+            '.fortress-paywall-container',
+            '.frontier-paywall-container',
+            'div[class*="fortress"]',
+            'div[class*="paywall"]'
+        ]);
+
+        changes += clearOverflowLocks([document.documentElement, document.body]);
+        changes += removeClassTokensByPattern([document.documentElement, document.body], /(paywall|fortress|lock|no-scroll|noscroll)/i);
+
+        if (document.body && document.body.hasAttribute('data-paywall-overlay-status')) {
+            document.body.removeAttribute('data-paywall-overlay-status');
+            changes += 1;
+        }
+
+        changes += revealElements([
+            'article',
+            'main article',
+            '.body-copy',
+            '.body-copy-v2',
+            '[data-component="ArticleBody"]'
+        ], ['filter', 'opacity', 'max-height', 'height', 'overflow', 'pointer-events'], /(blur|paywall|obscure|lock)/i);
+
+        changes += clearStorageKeys([/paywall/i, /meter/i, /fortress/i], window.localStorage);
+        changes += clearStorageKeys([/paywall/i, /meter/i, /fortress/i], window.sessionStorage);
+
+        if (context.articleContainer && getVisibleArticleLength(context.articleContainer) < 900) {
+            changes += appendStructuredArticleRescue([
+                '.body-copy-v2',
+                '.body-copy',
+                '[data-component="ArticleBody"]',
+                'article'
+            ], 'bloomberg');
+        }
+
+        return createLocalRuleResult(changes);
+    }
+
+    /**
+     * Resets Los Angeles Times meter overlays and restores article scrolling.
+     *
+     * @param {ReturnType<typeof getLocalRuleContext>} context The current site context.
+     * @returns {{applied: boolean}} The local-rule result.
+     */
+    function applyLatimesRulePack(context) {
+        let changes = 0;
+
+        changes += removeElements([
+            '#metering-modal',
+            '#metering-toppanel',
+            '.metering-modal',
+            '.metering-toppanel',
+            '[class*="metering"]',
+            '[id*="metering"]'
+        ]);
+
+        changes += clearOverflowLocks([document.documentElement, document.body]);
+        changes += removeClassTokensByPattern([document.documentElement, document.body], /(meter|modal-open|no-scroll|noscroll|paywall)/i);
+        changes += revealElements([
+            'article',
+            'main article',
+            '[data-testid="article-body"]'
+        ], ['filter', 'opacity', 'max-height', 'height', 'overflow']);
+        changes += clearStorageKeys([/meter/i, /paywall/i, /gateway/i], window.localStorage);
+        changes += clearStorageKeys([/meter/i, /paywall/i, /gateway/i], window.sessionStorage);
+
+        return createLocalRuleResult(changes);
+    }
+
+    /**
+     * Unhides MIT Technology Review article content that is present behind local CSS gates.
+     *
+     * @param {ReturnType<typeof getLocalRuleContext>} context The current site context.
+     * @returns {{applied: boolean}} The local-rule result.
+     */
+    function applyTechnologyReviewRulePack(context) {
+        let changes = 0;
+
+        changes += removeElements([
+            '.overlay--paywall',
+            '.paywall',
+            '.contentBody__gradient',
+            '[class*="paywallModal"]'
+        ]);
+
+        changes += clearOverflowLocks([document.documentElement, document.body]);
+        changes += removeClassTokensByPattern([
+            document.documentElement,
+            document.body,
+            ...getElementsForSelectors(['article', '.contentBody', '.articleBody'])
+        ], /(obscure|hidden|paywall|truncate|lock)/i);
+
+        changes += revealElements([
+            'article',
+            '.contentBody',
+            '.contentBody__content',
+            '.articleBody'
+        ], ['filter', 'opacity', 'max-height', 'height', 'overflow', 'clip-path']);
+
+        if (context.articleContainer && getVisibleArticleLength(context.articleContainer) < 700) {
+            changes += appendStructuredArticleRescue([
+                '.contentBody__content',
+                '.contentBody',
+                '.articleBody',
+                'article'
+            ], 'tech-review');
+        }
+
+        return createLocalRuleResult(changes);
+    }
+
+    /**
+     * Removes Globe and Mail subscription classes and restores the article body.
+     *
+     * @param {ReturnType<typeof getLocalRuleContext>} context The current site context.
+     * @returns {{applied: boolean}} The local-rule result.
+     */
+    function applyGlobeAndMailRulePack(context) {
+        let changes = 0;
+
+        changes += removeElements([
+            '.c-gate',
+            '.c-gate__container',
+            '.paywall-modal',
+            '.js-paywall-overlay',
+            '.js-sign-in-gate'
+        ]);
+
+        changes += clearOverflowLocks([document.documentElement, document.body]);
+        changes += removeClassTokensByPattern([
+            document.documentElement,
+            document.body,
+            ...getElementsForSelectors(['article', '.c-article-body'])
+        ], /(subscribed|paywall|locked|no-scroll|noscroll)/i);
+
+        changes += revealElements([
+            '.c-article-body',
+            '.c-article-body__content',
+            'article'
+        ], ['filter', 'opacity', 'max-height', 'height', 'overflow']);
+
+        return createLocalRuleResult(changes);
+    }
+
+    /**
+     * Restores full article bodies for Australian Community Media sites that truncate in place.
+     *
+     * @param {ReturnType<typeof getLocalRuleContext>} context The current site context.
+     * @returns {{applied: boolean}} The local-rule result.
+     */
+    function applyAustralianCommunityMediaRulePack(context) {
+        let changes = 0;
+
+        changes += removeElements([
+            '.subscriber-hider + .subscribe-truncate',
+            '.paywall',
+            '.subscription-offer',
+            '.m-signup-block'
+        ]);
+
+        changes += clearOverflowLocks([document.documentElement, document.body]);
+        changes += removeClassTokensByPattern([
+            document.documentElement,
+            document.body,
+            ...getElementsForSelectors(['article', '.subscriber-hider', '.subscribe-truncate'])
+        ], /(subscriber|truncate|hidden|paywall|lock)/i);
+
+        changes += revealElements([
+            '.subscriber-hider',
+            '.subscribe-truncate',
+            'article',
+            '.story__content'
+        ], ['filter', 'opacity', 'max-height', 'height', 'overflow', 'display']);
+
+        if (context.articleContainer && getVisibleArticleLength(context.articleContainer) < 700) {
+            changes += appendStructuredArticleRescue([
+                '.subscriber-hider',
+                '.story__content',
+                'article'
+            ], 'australian-community-media');
+        }
+
+        return createLocalRuleResult(changes);
+    }
+
+    /**
+     * Builds a consistent local-rule result object from a numeric change count.
+     *
+     * @param {number} changeCount The number of concrete DOM or storage changes made.
+     * @returns {{applied: boolean}} The normalized local-rule result.
+     */
+    function createLocalRuleResult(changeCount) {
+        return {
+            applied: changeCount > 0
+        };
+    }
+
+    /**
+     * Finds all matching elements for one or more selectors without duplicating nodes.
+     *
+     * @param {string | string[]} selectors A selector or list of selectors to query.
+     * @returns {Element[]} The unique matching elements.
+     */
+    function getElementsForSelectors(selectors) {
+        const selectorList = Array.isArray(selectors) ? selectors : [selectors];
+        const elements = [];
+        const seen = new Set();
+
+        selectorList.forEach((selector) => {
+            if (typeof selector !== 'string' || !selector) {
+                return;
+            }
+
+            document.querySelectorAll(selector).forEach((element) => {
+                if ((ui.root && ui.root.contains(element)) || seen.has(element)) {
+                    return;
+                }
+
+                seen.add(element);
+                elements.push(element);
+            });
+        });
+
+        return elements;
+    }
+
+    /**
+     * Removes matching elements and returns how many were deleted.
+     *
+     * @param {string | string[]} selectors A selector or list of selectors to remove.
+     * @returns {number} The number of removed elements.
+     */
+    function removeElements(selectors) {
+        const elements = getElementsForSelectors(selectors);
+        elements.forEach((element) => element.remove());
+        return elements.length;
+    }
+
+    /**
+     * Clears common page-locking inline styles from the supplied elements.
+     *
+     * @param {Array<Element | null | undefined>} elements The elements that may have scrolling locks.
+     * @returns {number} The number of style properties that were removed.
+     */
+    function clearOverflowLocks(elements) {
+        let changes = 0;
+
+        elements.forEach((element) => {
+            if (!element || !element.style) {
+                return;
+            }
+
+            ['overflow', 'overflow-y', 'overflow-x', 'position', 'height', 'max-height', 'touch-action'].forEach((property) => {
+                if (element.style.getPropertyValue(property)) {
+                    element.style.removeProperty(property);
+                    changes += 1;
+                }
+            });
+        });
+
+        return changes;
+    }
+
+    /**
+     * Removes class tokens that match a pattern from the provided elements.
+     *
+     * @param {Array<Element | null | undefined>} elements The elements whose class names should be cleaned.
+     * @param {RegExp} pattern The class-token pattern to remove.
+     * @returns {number} The number of removed class tokens.
+     */
+    function removeClassTokensByPattern(elements, pattern) {
+        let changes = 0;
+
+        elements.forEach((element) => {
+            if (!element || !element.classList || !pattern) {
+                return;
+            }
+
+            const matchingTokens = Array.from(element.classList).filter((token) => pattern.test(token));
+            if (!matchingTokens.length) {
+                return;
+            }
+
+            element.classList.remove(...matchingTokens);
+            changes += matchingTokens.length;
+        });
+
+        return changes;
+    }
+
+    /**
+     * Clears hiding attributes, matching classes, and restrictive inline styles from matching elements.
+     *
+     * @param {string | string[]} selectors A selector or list of selectors to reveal.
+     * @param {string[]} styleProperties Inline style properties that should be cleared.
+     * @param {RegExp} [classPattern] Optional class-token pattern to remove while revealing.
+     * @returns {number} The number of reveal-related changes made.
+     */
+    function revealElements(selectors, styleProperties, classPattern) {
+        let changes = 0;
+
+        getElementsForSelectors(selectors).forEach((element) => {
+            if (element.hidden) {
+                element.hidden = false;
+                changes += 1;
+            }
+
+            if (element.hasAttribute('hidden')) {
+                element.removeAttribute('hidden');
+                changes += 1;
+            }
+
+            if (element.getAttribute('aria-hidden') === 'true') {
+                element.removeAttribute('aria-hidden');
+                changes += 1;
+            }
+
+            ['display', 'visibility', ...styleProperties].forEach((property) => {
+                if (element.style && element.style.getPropertyValue(property)) {
+                    element.style.removeProperty(property);
+                    changes += 1;
+                }
+            });
+
+            if (classPattern) {
+                changes += removeClassTokensByPattern([element], classPattern);
+            }
+        });
+
+        return changes;
+    }
+
+    /**
+     * Removes site-specific storage keys that look like paywall or metering state.
+     *
+     * @param {RegExp[]} patterns The key-name patterns that should be cleared.
+     * @param {Storage | undefined} storage The storage area to clean.
+     * @returns {number} The number of removed storage keys.
+     */
+    function clearStorageKeys(patterns, storage) {
+        if (!storage || !Array.isArray(patterns) || !patterns.length) {
+            return 0;
+        }
+
+        let changes = 0;
+        const keys = [];
+
+        try {
+            for (let index = 0; index < storage.length; index += 1) {
+                const key = storage.key(index);
+                if (typeof key === 'string') {
+                    keys.push(key);
+                }
+            }
+        } catch (error) {
+            return 0;
+        }
+
+        keys.forEach((key) => {
+            if (!patterns.some((pattern) => pattern.test(key))) {
+                return;
+            }
+
+            try {
+                storage.removeItem(key);
+                changes += 1;
+            } catch (error) {
+                // Ignore per-key storage failures so other keys can still be removed.
+            }
+        });
+
+        return changes;
+    }
+
+    /**
+     * Appends a clean text-only article rescue block from JSON-LD when the DOM body is truncated.
+     *
+     * @param {string[]} selectors Candidate containers that can host the recovered article text.
+     * @param {string} markerId A stable marker that prevents duplicate rescue blocks.
+     * @returns {number} `1` when article text was appended, otherwise `0`.
+     */
+    function appendStructuredArticleRescue(selectors, markerId) {
+        const articleBody = getStructuredArticleBodyText();
+        if (!articleBody) {
+            return 0;
+        }
+
+        const normalizedText = normalizeArticleBodyText(articleBody);
+        if (normalizedText.length < 900) {
+            return 0;
+        }
+
+        const host = getElementsForSelectors(selectors)[0];
+        if (!host || host.querySelector(`[data-bypass-reader="${markerId}"]`)) {
+            return 0;
+        }
+
+        const currentVisibleLength = getVisibleArticleLength(host);
+        if (currentVisibleLength >= normalizedText.length * 0.7) {
+            return 0;
+        }
+
+        const rescue = document.createElement('section');
+        rescue.className = 'bypass-local-reader';
+        rescue.setAttribute('data-bypass-reader', markerId);
+
+        const heading = document.createElement('h2');
+        heading.className = 'bypass-local-reader-title';
+        heading.textContent = 'Recovered article text';
+        rescue.appendChild(heading);
+
+        splitArticleTextIntoParagraphs(normalizedText).forEach((paragraphText) => {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = paragraphText;
+            rescue.appendChild(paragraph);
+        });
+
+        host.appendChild(rescue);
+        return 1;
+    }
+
+    /**
+     * Extracts the most complete `articleBody` string from JSON-LD metadata on the page.
+     *
+     * @returns {string} The longest valid article-body string or an empty string.
+     */
+    function getStructuredArticleBodyText() {
+        let bestMatch = '';
+
+        document.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+            const payload = tryParseJson(script.textContent);
+            const candidate = findLongestArticleBody(payload);
+            if (candidate.length > bestMatch.length) {
+                bestMatch = candidate;
+            }
+        });
+
+        return bestMatch;
+    }
+
+    /**
+     * Parses JSON safely and returns `null` when the payload is invalid.
+     *
+     * @param {string} raw The raw JSON text to parse.
+     * @returns {unknown | null} The parsed JSON payload or `null`.
+     */
+    function tryParseJson(raw) {
+        if (typeof raw !== 'string' || !raw.trim()) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Recursively finds the longest plausible `articleBody` string inside a JSON payload.
+     *
+     * @param {unknown} value The JSON value to scan.
+     * @returns {string} The best matching article-body string.
+     */
+    function findLongestArticleBody(value) {
+        if (!value) {
+            return '';
+        }
+
+        if (Array.isArray(value)) {
+            return value.reduce((longest, entry) => {
+                const candidate = findLongestArticleBody(entry);
+                return candidate.length > longest.length ? candidate : longest;
+            }, '');
+        }
+
+        if (typeof value === 'object') {
+            let bestMatch = '';
+            Object.entries(value).forEach(([key, entry]) => {
+                if (key === 'articleBody' && typeof entry === 'string' && entry.length > bestMatch.length) {
+                    bestMatch = entry;
+                    return;
+                }
+
+                const candidate = findLongestArticleBody(entry);
+                if (candidate.length > bestMatch.length) {
+                    bestMatch = candidate;
+                }
+            });
+            return bestMatch;
+        }
+
+        return '';
+    }
+
+    /**
+     * Normalizes JSON-LD article text into readable plain text for local rendering.
+     *
+     * @param {string} text The raw extracted article-body string.
+     * @returns {string} The normalized article text.
+     */
+    function normalizeArticleBodyText(text) {
+        return text
+            .replace(/\r\n?/g, '\n')
+            .replace(/\u00a0/g, ' ')
+            .replace(/[ \t]+\n/g, '\n')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/[ \t]{2,}/g, ' ')
+            .trim();
+    }
+
+    /**
+     * Splits normalized article text into readable paragraphs for the local rescue block.
+     *
+     * @param {string} text The normalized article text.
+     * @returns {string[]} The paragraph list to render.
+     */
+    function splitArticleTextIntoParagraphs(text) {
+        const newlineParagraphs = text
+            .split(/\n{2,}/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean);
+
+        if (newlineParagraphs.length >= 2) {
+            return newlineParagraphs;
+        }
+
+        const sentenceChunks = text.match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/g) || [text];
+
+        return sentenceChunks
+            .map((sentence) => sentence.trim())
+            .filter(Boolean)
+            .reduce((paragraphs, sentence) => {
+                const lastParagraph = paragraphs[paragraphs.length - 1];
+                if (!lastParagraph || lastParagraph.length >= 420) {
+                    paragraphs.push(sentence);
+                } else {
+                    paragraphs[paragraphs.length - 1] = `${lastParagraph} ${sentence}`;
+                }
+                return paragraphs;
+            }, []);
+    }
+
+    /**
+     * Formats a list of labels into a compact English string for toast messages.
+     *
+     * @param {string[]} labels The labels that should be joined for display.
+     * @returns {string} The formatted label list.
+     */
+    function formatLabelList(labels) {
+        if (!labels.length) {
+            return 'No';
+        }
+
+        if (labels.length === 1) {
+            return labels[0];
+        }
+
+        if (labels.length === 2) {
+            return `${labels[0]} and ${labels[1]}`;
+        }
+
+        return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
     }
 
     // --- Quick-Try Cascade & Default Routing ---
@@ -1685,11 +2517,11 @@
      * @returns {string | null} The preferred service ID for the current domain, if one applies.
      */
     function getBestServiceForCurrentSite() {
-        const hostname = window.location.hostname.replace(/^www\./, '');
+        const hostname = normalizeHostname(window.location.hostname);
         const currentUrl = new URL(window.location.href);
 
         for (const [domain, serviceId] of Object.entries(SITE_BEST_SERVICE)) {
-            if (hostname === domain || hostname.endsWith(`.${domain}`)) {
+            if (hostnameMatchesDomain(hostname, domain)) {
                 const service = SERVICE_DEFINITIONS[serviceId];
                 if (service && (!service.supports || service.supports(currentUrl))) {
                     return serviceId;
@@ -1876,6 +2708,27 @@
     function toServicePath(url) {
         const normalizedUrl = encodeURI(url).replace(/^https?:\/\//, '');
         return normalizedUrl.replace(/\?/g, '%3F').replace(/#/g, '%23');
+    }
+
+    /**
+     * Normalizes a hostname so site matching ignores a leading `www.` prefix.
+     *
+     * @param {string} hostname The hostname to normalize.
+     * @returns {string} The normalized hostname.
+     */
+    function normalizeHostname(hostname) {
+        return String(hostname || '').replace(/^www\./, '');
+    }
+
+    /**
+     * Checks whether a hostname matches a bare domain or one of its subdomains.
+     *
+     * @param {string} hostname The normalized hostname to test.
+     * @param {string} domain The bare domain that should match.
+     * @returns {boolean} `true` when the hostname matches the domain.
+     */
+    function hostnameMatchesDomain(hostname, domain) {
+        return hostname === domain || hostname.endsWith(`.${domain}`);
     }
 
     /**
@@ -2194,6 +3047,30 @@
             }
             .bypass-chip-reliability {
                 background: rgba(59, 130, 246, 0.12);
+            }
+            .bypass-local-reader {
+                margin-top: 18px;
+                padding: 18px;
+                border-radius: 16px;
+                background: rgba(15, 118, 110, 0.06);
+                border: 1px solid var(--bypass-panel-border);
+                color: inherit;
+            }
+            #paywallBypassRoot[data-theme="dark"] .bypass-local-reader {
+                background: rgba(30, 41, 59, 0.78);
+            }
+            .bypass-local-reader-title {
+                margin: 0 0 12px;
+                font-size: 15px;
+                font-weight: 700;
+                color: var(--bypass-chip-fg);
+            }
+            .bypass-local-reader p {
+                margin: 0 0 12px;
+                line-height: 1.65;
+            }
+            .bypass-local-reader p:last-child {
+                margin-bottom: 0;
             }
             #bypassFeedback {
                 position: fixed;
