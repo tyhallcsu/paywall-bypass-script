@@ -1,20 +1,22 @@
 <div align="center">
 
-<img src="assets/repository-banner.jpg" alt="Paywall Bypass — newspaper pages branch toward an archive drawer" width="1200">
+<img src="assets/readme-banner.png" alt="Paywall Bypass Script — an ivory newspaper unfolds through an opening in a navy wall, following an amber ribbon." width="100%">
 
 # Paywall Bypass Script
 
-**One menu for archive lookups, reading services, and your next option.**
+**Archive and bypass services, one article away.**
 
-[![Install on Greasy Fork](https://img.shields.io/badge/Greasy_Fork-Install-e69b32?style=flat-square)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com) [![JavaScript](https://img.shields.io/badge/JavaScript-Userscript-f7df1e?style=flat-square&logo=javascript&logoColor=black)](paywall-bypass.user.js) [![Match patterns](https://img.shields.io/badge/Match_patterns-232-287c86?style=flat-square)](#supported-sites) [![License](https://img.shields.io/badge/License-MIT-287c86?style=flat-square)](LICENSE)
+A privacy-first userscript with local site fixes, archive routing, and local-only reliability tracking.
 
-[Install](#quick-install) · [Preview](#interface-preview) · [Features](#features) · [Usage](#usage) · [Troubleshooting](#troubleshooting) · [Development](#repository-guide)
+[![Install on Greasy Fork](https://img.shields.io/badge/Greasy_Fork-Install-d99a39?style=flat-square)](https://greasyfork.org/en/scripts/495817-paywall-bypass-script-12ft-io-google-cache-paywallbuster-com) [![JavaScript userscript](https://img.shields.io/badge/JavaScript-Userscript-f1e4c8?style=flat-square)](paywall-bypass.user.js) [![232 site patterns](https://img.shields.io/badge/Site_patterns-232-237d85?style=flat-square)](#supported-sites) [![MIT license](https://img.shields.io/badge/License-MIT-237d85?style=flat-square)](LICENSE)
+
+**[Install](#quick-install)** · [See it in action](#interface-preview) · [Usage](#usage) · [Services](#services) · [Troubleshooting](#troubleshooting) · [Contribute](#contributing)
 
 </div>
 
 A desktop-and-mobile **userscript** that adds a floating button, grouped service menu, keyboard shortcuts, and targeted client-side site fixes to supported article pages. It runs local site packs where available, opens archive and reading services, prioritizes a route for selected sites, and keeps your service feedback locally.
 
-**This is a service launcher.** A matching domain or a paywall-detection signal does not guarantee that an article is available. External services determine their own coverage and availability.
+**Local fixes and external services are complementary.** A matching domain or a paywall-detection signal does not guarantee that an article is available. External services determine their own coverage and availability.
 
 ## Quick Install
 
@@ -30,9 +32,9 @@ The checked-in userscript declares version **2.1.0**. Its `@downloadURL` and `@u
 
 ## Interface Preview
 
-![Actual userscript service menu on a fictional local demonstration page](assets/service-menu.png)
+![Actual userscript service menu on a fictional local demonstration page](assets/service-menu-demo.png)
 
-*Real userscript UI, captured on a local fictional article with userscript APIs shimmed. The menu, Try All button, groups, and “No data” badges are rendered by the unchanged source. No publisher content or live service requests are included.* [Capture details](assets/README.md#interface-capture).
+*Real v2.1.0 userscript UI, captured on a local fictional article with userscript APIs shimmed. The menu, Try All button, groups, and “No data” badges are rendered by the unchanged source. No publisher content or live service requests are included.* [Capture details](assets/README.md#service-menu-demo).
 
 ## Overview
 
@@ -70,6 +72,13 @@ Extension ports, adaptive routing, and the community registry remain [roadmap wo
 3. Click **Try All** or press `Alt+Shift+B` to open the top services in new tabs.
 4. Click the chevron button or press `Alt+Shift+M` to choose a specific service or run **Apply Local Fixes** again.
 5. When you come back to the article tab, mark which service worked so the script can update your local reliability badges.
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Alt+Shift+B` | Open the top services with **Try All** |
+| `Alt+Shift+M` | Open or close the service menu |
 
 ### Paywall Detection
 
@@ -233,7 +242,7 @@ Released under the [MIT License](LICENSE).
 
 ## Support
 
-If this project is useful to you, [star the repository](https://github.com/tyhallcsu/paywall-bypass-script/stargazers) and consider sharing broken-site reports through [CONTRIBUTING.md](CONTRIBUTING.md) so the service list stays current.
+If this project is useful to you, [star the repository](https://github.com/tyhallcsu/paywall-bypass-script) and consider sharing broken-site reports through [CONTRIBUTING.md](CONTRIBUTING.md) so the service list stays current.
 
 ## Roadmap
 
