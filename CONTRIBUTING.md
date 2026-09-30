@@ -29,6 +29,18 @@ Open a GitHub issue and include:
 3. Test the target site on a direct article URL.
 4. Update `CHANGELOG.md` if the change is intended for release.
 
+## Offline validation
+
+There is no root dependency installation or build step. With Node.js installed:
+
+```sh
+node --check paywall-bypass.user.js
+git diff --check
+```
+
+These checks validate syntax and whitespace, not publisher compatibility or external service availability.
+Chrome/Firefox extension folders and the `paywall-detect` package are scaffolds; do not treat them as release artifacts.
+
 ## Testing changes locally
 
 1. Install a userscript manager such as Tampermonkey, Greasemonkey, or Violentmonkey.
