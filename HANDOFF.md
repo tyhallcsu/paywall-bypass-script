@@ -6,7 +6,7 @@ Written 2026-09-30 when a session ran out of context. Trust `git log` / `gh` ove
 
 - **This repo (`tyhallcsu/paywall-bypass-script`) is the Greasy Fork 495817 source.** Greasy Fork is canonical.
 - **Keep the v1.3.0 `@name` and `@namespace`** for every release. Don't rename.
-- The private `tyhallcsu/paywall-userscript` repo (the "lawful helper" rewrite) is gone from GitHub (404). A local copy is at `~/Documents/GitHub/paywall-userscript`. Its Tampermonkey evidence: a changed `@name` installs as a second script (DUPLICATE), see `docs/COMPATIBILITY.md` there.
+- The private `tyhallcsu/paywall-userscript` repo (the "lawful helper" rewrite) still exists. It briefly returned 404 on 2026-09-30, but that was temporary, not a deletion. Its feedback issues #4–#10 are closed: #4–#8 moved here as #6–#10, and #9/#10 were refiled here as #4/#5. Its Tampermonkey evidence: a changed `@name` installs as a second script (DUPLICATE), see `docs/COMPATIBILITY.md` there.
 
 ## Done on branch `fix/9-keep-v130-identity`
 
@@ -18,7 +18,7 @@ Written 2026-09-30 when a session ran out of context. Trust `git log` / `gh` ove
 
 ## Next steps, in order
 
-1. Install the Playwright browser. The last attempt timed out after 600s: `TMPDIR=<writable dir> npx playwright install chromium` (needs chromium-1194 for @playwright/test 1.56.1).
+1. **Blocked: the disk is full** (277 MB free on the data volume on 2026-09-30). The Chromium download failed with `ENOSPC`, and `~/Library/Caches/ms-playwright/chromium-1194` is truncated (`codesign -v` fails). Free about 1.5 GB first, delete the broken `chromium-1194` and `chromium_headless_shell-1194` folders (Tyler hasn't approved this yet), then run `TMPDIR=<writable dir> npx playwright install chromium`.
 2. Run: `TM_EXTENSION_PATH=/Users/tylerhall/Documents/GitHub/1337/test/extensions/tampermonkey TMPDIR=<writable dir> npm run test:update-identity -- --runs=2`. Expect CONTROL=DUPLICATE and FIX=IN_PLACE in both runs. Commit `docs/evidence/update-identity/result.json`.
 3. Update the README. Line ~29 still says `@downloadURL`/`@updateURL` point to GitHub `main`, and the raw-GitHub install links now update from Greasy Fork. Add a short "Why the title still says 12ft.io" note. Add a `## [2.1.1]` CHANGELOG entry.
 4. Optional: a GitHub Actions workflow running `npm run check` on PRs.
