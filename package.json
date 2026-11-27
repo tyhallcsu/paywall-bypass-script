@@ -1,0 +1,15 @@
+{
+  "name": "paywall-bypass-script",
+  "version": "2.1.1",
+  "private": true,
+  "description": "Dev tooling for paywall-bypass.user.js. The userscript itself has no dependencies.",
+  "type": "module",
+  "scripts": {
+    "check": "node --check paywall-bypass.user.js && node scripts/check-identity.mjs",
+    "test:update-identity": "node test/update-identity.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  },
+  "license": "MIT"
+}

@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Paywall Bypass Script (Archive & Bypass Services)
-// @namespace    https://github.com/tyhallcsu/paywall-bypass-script
-// @version      2.1.0
+// @name         Paywall Bypass Script (12ft.io, Google Cache, PaywallBuster.com)
+// @namespace    http://tampermonkey.net/
+// @version      2.1.1
 // @description  Mobile and desktop-friendly paywall bypass with grouped archive and bypass services, quick routing, client-side site fixes, and accessible controls.
 // @author       sharmanhall
 // @license      MIT
@@ -252,8 +252,8 @@
 // @grant        GM_setClipboard
 // @noframes
 // @run-at       document-idle
-// @downloadURL  https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js
-// @updateURL    https://raw.githubusercontent.com/tyhallcsu/paywall-bypass-script/main/paywall-bypass.user.js
+// @downloadURL  https://update.greasyfork.org/scripts/495817/Paywall%20Bypass%20Script%20%2812ftio%2C%20Google%20Cache%2C%20PaywallBustercom%29.user.js
+// @updateURL    https://update.greasyfork.org/scripts/495817/Paywall%20Bypass%20Script%20%2812ftio%2C%20Google%20Cache%2C%20PaywallBustercom%29.meta.js
 // ==/UserScript==
 
 (function() {
@@ -281,7 +281,7 @@
         'similarWeb'
     ];
 
-    const SCRIPT_VERSION = '2.1.0';
+    const SCRIPT_VERSION = '2.1.1';
     const QUICK_TRY_LIMIT = 3;
     const LOCAL_RULE_PACK_DELAYS_MS = [0, 900, 2500];
     const PAYWALL_BADGE_DURATION_MS = 3000;
